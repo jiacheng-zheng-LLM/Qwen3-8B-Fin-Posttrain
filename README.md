@@ -1,7 +1,7 @@
 # Qwen3-8B-Fin-Posttrain
 
 **Two-stage post-training (LoRA SFT → GRPO) of Qwen3-8B for financial reasoning, on 6×RTX4090.**
-Includes the full experiment log, every evaluation artifact, and a documented **null result** for the RL stage.
+Includes the full experiment log, every evaluation artifact, and a documented **result** for the RL stage.
 
 ---
 
@@ -11,7 +11,7 @@ Includes the full experiment log, every evaluation artifact, and a documented **
 一个无法审计推理链条的答案在业务上不可用。业界对此的解法是**两阶段后训练**——先用带推理链的数据
 做监督微调让模型学会"先想后答"，再用可验证的规则奖励做强化学习把正确率顶上去。
 
-**实现。** 本项目在 **6×RTX4090** 上以**纯 LoRA** 独立复现该范式，
+**实现。** 本项目在 **6×RTX4090** 上以 **SFT 中的 LoRA 进行监督微调**，
 基座 **Qwen3-8B**，框架 **ms-swift**。训练数据的题干为 CFLUE 与 FinQA 的真实金融考题
 （共 36 568 条），**推理链由本项目用 DeepSeek-V4-Pro-0813 重新蒸馏**。难例筛选改用**客观判据**：
 以 SFT 模型自身采样通过率 `c/k ∈ (0,1)` 为唯一条件。用 liger kernel 融合交叉熵化解 152k 大词表
