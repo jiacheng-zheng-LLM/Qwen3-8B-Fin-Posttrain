@@ -207,9 +207,9 @@
   "add_non_thinking_prefix": true,
   "disable_ignore_empty_think": false,
   "dataset": [
-    "data/DianJin-R1-Data/train/cflue_mcq.f5120.json",
-    "data/DianJin-R1-Data/train/cflue_oe.f5120.json",
-    "data/DianJin-R1-Data/train/fin_qa.decontam.f5120.json"
+    "data/train/cflue_mcq.f5120.json",
+    "data/train/cflue_oe.f5120.json",
+    "data/train/fin_qa.decontam.f5120.json"
   ],
   "val_dataset": [],
   "cached_dataset": [],
