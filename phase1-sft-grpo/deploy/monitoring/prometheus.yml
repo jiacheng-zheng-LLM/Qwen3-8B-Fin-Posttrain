@@ -1,0 +1,20 @@
+# Prometheus:直抓 3 个 vLLM 副本原生 /metrics(吞吐/延迟/KV命中/排队/运行请求数)
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+scrape_configs:
+  - job_name: vllm-replicas
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - vllm-r1:8000
+          - vllm-r2:8000
+          - vllm-r3:8000
+        labels:
+          service: qwen3-fin
+    # 关键指标(vLLM 原生暴露):
+    #   vllm:num_requests_running / _waiting     —— 并发与排队深度
+    #   vllm:gpu_cache_usage_perc                —— KV cache 占用(容量红线)
+    #   vllm:time_to_first_token_seconds         —— 首 token 延迟(SLA)
+    #   vllm:e2e_request_latency_seconds         —— 端到端延迟
+    #   vllm:prompt_tokens_total / generation_.. —— 吞吐

@@ -1,0 +1,8 @@
+{
+  "benchmark": "cflue",
+  "tag": "grpo",
+  "adapter": "grpo-full/v0-20260818-165503/checkpoint-1210",
+  "n": 800,
+  "correct": 438,
+  "accuracy": 0.5475
+}

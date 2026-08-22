@@ -1,0 +1,8 @@
+{
+  "benchmark": "math500",
+  "tag": "base",
+  "adapter": null,
+  "n": 500,
+  "correct": 202,
+  "accuracy": 0.404
+}

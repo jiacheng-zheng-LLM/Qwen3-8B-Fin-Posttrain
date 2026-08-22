@@ -1,0 +1,8 @@
+{
+  "benchmark": "cflue",
+  "tag": "smoke",
+  "adapter": null,
+  "n": 10,
+  "correct": 3,
+  "accuracy": 0.3
+}

@@ -1,0 +1,8 @@
+{
+  "benchmark": "cflue",
+  "tag": "base",
+  "adapter": null,
+  "n": 800,
+  "correct": 384,
+  "accuracy": 0.48
+}

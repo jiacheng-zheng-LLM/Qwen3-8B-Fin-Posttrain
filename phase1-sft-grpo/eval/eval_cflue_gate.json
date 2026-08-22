@@ -1,0 +1,9 @@
+{
+  "benchmark": "cflue",
+  "tag": "gate",
+  "mode": "boxed",
+  "adapter": null,
+  "n": 800,
+  "correct": 436,
+  "accuracy": 0.545
+}

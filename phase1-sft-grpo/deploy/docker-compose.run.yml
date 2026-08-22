@@ -1,0 +1,83 @@
+# 实跑编排(本次共享机器版):只用干净卡 2,3,4,5,6,避开 GPU0(nilmtk)/1,7(ollama)。
+# 布局:2×TP2(2,3 / 4,5)+ 1×TP1(6),保持 3 副本+负载均衡。
+# 生产 6 卡规范见 docker-compose.yml(0,2 / 3,4 / 5,6 全 TP2)。
+x-vllm-common: &vllm-common
+  image: vllm/vllm-openai:v0.26.0
+  runtime: nvidia
+  ipc: host
+  volumes:
+    - ./models:/models:ro
+  restart: unless-stopped
+
+services:
+  vllm-r1:
+    <<: *vllm-common
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=2,3
+      - NO_PROXY=127.0.0.1,localhost
+      - no_proxy=127.0.0.1,localhost
+      - NCCL_P2P_DISABLE=1
+      - VLLM_USE_FLASHINFER_SAMPLER=0
+    command: >
+      --model /models/qwen3-fin-v1.0 --served-model-name qwen3-fin
+      --tensor-parallel-size 2 --gpu-memory-utilization 0.85
+      --max-model-len 8192 --host 0.0.0.0 --port 8000
+    ports: ["8001:8000"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 300s
+  vllm-r2:
+    <<: *vllm-common
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=4,5
+      - NO_PROXY=127.0.0.1,localhost
+      - no_proxy=127.0.0.1,localhost
+      - NCCL_P2P_DISABLE=1
+      - VLLM_USE_FLASHINFER_SAMPLER=0
+    command: >
+      --model /models/qwen3-fin-v1.0 --served-model-name qwen3-fin
+      --tensor-parallel-size 2 --gpu-memory-utilization 0.85
+      --max-model-len 8192 --host 0.0.0.0 --port 8000
+    ports: ["8002:8000"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 300s
+  vllm-r3:
+    <<: *vllm-common
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=6
+      - NO_PROXY=127.0.0.1,localhost
+      - no_proxy=127.0.0.1,localhost
+      - NCCL_P2P_DISABLE=1
+      - VLLM_USE_FLASHINFER_SAMPLER=0
+    command: >
+      --model /models/qwen3-fin-v1.0 --served-model-name qwen3-fin
+      --tensor-parallel-size 1 --gpu-memory-utilization 0.85
+      --max-model-len 8192 --host 0.0.0.0 --port 8000
+    ports: ["8003:8000"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 300s
+  gateway:
+    image: nginx:alpine
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports: ["4000:4000"]
+    depends_on: [vllm-r1, vllm-r2, vllm-r3]
+    restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports: ["9091:9090"]
+    depends_on: [vllm-r1, vllm-r2, vllm-r3]
+    restart: unless-stopped

@@ -1,0 +1,8 @@
+{
+  "benchmark": "finqa",
+  "tag": "base",
+  "adapter": null,
+  "n": 1127,
+  "correct": 588,
+  "accuracy": 0.5217
+}

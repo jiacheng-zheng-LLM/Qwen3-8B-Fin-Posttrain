@@ -1,0 +1,8 @@
+{
+  "benchmark": "cflue",
+  "tag": "sft",
+  "adapter": "qwen3-8b-fin-sft-v1/v0-20260818-002659/checkpoint-1113",
+  "n": 800,
+  "correct": 431,
+  "accuracy": 0.5387
+}

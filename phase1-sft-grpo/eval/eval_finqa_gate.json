@@ -1,0 +1,9 @@
+{
+  "benchmark": "finqa",
+  "tag": "gate",
+  "mode": "boxed",
+  "adapter": null,
+  "n": 1127,
+  "correct": 696,
+  "accuracy": 0.6176
+}

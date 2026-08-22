@@ -1,0 +1,8 @@
+{
+  "benchmark": "math500",
+  "tag": "sft",
+  "adapter": "qwen3-8b-fin-sft-v1/v0-20260818-002659/checkpoint-1113",
+  "n": 500,
+  "correct": 271,
+  "accuracy": 0.542
+}

@@ -1,0 +1,8 @@
+{
+  "benchmark": "gpqa",
+  "tag": "base",
+  "adapter": null,
+  "n": 198,
+  "correct": 22,
+  "accuracy": 0.1111
+}

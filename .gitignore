@@ -1,0 +1,30 @@
+# 模型权重与训练中间态（体积大、可由 base + adapter 重新产出）
+*.safetensors
+*.bin
+!**/training_args.bin
+optimizer.pt
+scheduler.pt
+rng_state*.pth
+*.pt
+
+# 上游数据集与蒸馏产出（见 DATA.md / DISTILLATION.md，勿提交）
+data/*/train/
+data/eval_public/
+data/sft_*.json
+
+# 运行日志（本项目不发布原始 stdout 日志）
+logs/
+**/logs/
+*.log
+**/runs/
+events.out.tfevents.*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

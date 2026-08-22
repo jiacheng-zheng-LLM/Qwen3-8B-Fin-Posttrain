@@ -1,0 +1,93 @@
+# 企业级部署:3×TP2 vLLM 副本 + Nginx 网关(OpenAI 兼容负载均衡)
+# 模型:合并后的不可变工件 qwen3-fin-v1.0(SFT+GRPO)。镜像用本地缓存,不触网。
+# GPU 排布:生产 6 卡集 = 0,2,3,4,5,6(避开卡1/卡7 外来进程)。TP=2 必整除 32 头。
+services:
+  vllm-r1:
+    image: vllm/vllm-openai:v0.26.0
+    runtime: nvidia
+    ipc: host                       # vLLM 张量并行需共享内存(NCCL),否则 TP 卡死
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0,2
+      - NO_PROXY=127.0.0.1,localhost # 项目 OBS-9:防代理拦 localhost
+      - no_proxy=127.0.0.1,localhost
+      - NCCL_P2P_DISABLE=1           # 无 NVLink,禁 P2P 防 NCCL 挂起
+      - VLLM_USE_FLASHINFER_SAMPLER=0
+    volumes:
+      - ./models:/models:ro          # 只读挂载,模型不可变
+    command: >
+      --model /models/qwen3-fin-v1.0 --served-model-name qwen3-fin
+      --tensor-parallel-size 2 --gpu-memory-utilization 0.9
+      --max-model-len 8192 --host 0.0.0.0 --port 8000
+     
+    ports: ["8001:8000"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 300s             # 8B 加载 + TP 初始化需数分钟
+    restart: unless-stopped
+  vllm-r2:
+    image: vllm/vllm-openai:v0.26.0
+    runtime: nvidia
+    ipc: host
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=3,4
+      - NO_PROXY=127.0.0.1,localhost
+      - no_proxy=127.0.0.1,localhost
+      - NCCL_P2P_DISABLE=1
+      - VLLM_USE_FLASHINFER_SAMPLER=0
+    volumes:
+      - ./models:/models:ro
+    command: >
+      --model /models/qwen3-fin-v1.0 --served-model-name qwen3-fin
+      --tensor-parallel-size 2 --gpu-memory-utilization 0.9
+      --max-model-len 8192 --host 0.0.0.0 --port 8000
+     
+    ports: ["8002:8000"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 300s
+    restart: unless-stopped
+  vllm-r3:
+    image: vllm/vllm-openai:v0.26.0
+    runtime: nvidia
+    ipc: host
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=5,6
+      - NO_PROXY=127.0.0.1,localhost
+      - no_proxy=127.0.0.1,localhost
+      - NCCL_P2P_DISABLE=1
+      - VLLM_USE_FLASHINFER_SAMPLER=0
+    volumes:
+      - ./models:/models:ro
+    command: >
+      --model /models/qwen3-fin-v1.0 --served-model-name qwen3-fin
+      --tensor-parallel-size 2 --gpu-memory-utilization 0.9
+      --max-model-len 8192 --host 0.0.0.0 --port 8000
+     
+    ports: ["8003:8000"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 300s
+    restart: unless-stopped
+  gateway:
+    image: nginx:alpine
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports: ["4000:4000"]
+    depends_on: [vllm-r1, vllm-r2, vllm-r3]
+    restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports: ["9091:9090"]
+    depends_on: [vllm-r1, vllm-r2, vllm-r3]
+    restart: unless-stopped

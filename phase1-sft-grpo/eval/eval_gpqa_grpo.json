@@ -1,0 +1,8 @@
+{
+  "benchmark": "gpqa",
+  "tag": "grpo",
+  "adapter": "grpo-full/v0-20260818-165503/checkpoint-1210",
+  "n": 198,
+  "correct": 38,
+  "accuracy": 0.1919
+}

@@ -1,0 +1,16 @@
+# 训练 / 评测（Phase 1 实跑版本，务必锁定——见 EXPERIMENT_LOG 的版本类事故）
+ms-swift==4.4.2
+vllm==0.26.0
+torch>=2.4
+transformers>=4.51            # 低于此版本会在加载合并模型 tokenizer 时崩溃（DEPLOY_LOG D-7）
+peft>=0.13
+liger-kernel>=0.5             # 融合交叉熵，24GB 卡上把 max_length 从 4096 顶到 5120
+datasets>=2.20
+accelerate>=1.0
+deepspeed>=0.15               # ZeRO-2；无 NVLink 环境勿用 ZeRO-3
+
+# 绘图（scripts/make_figures.py 仅依赖此项）
+matplotlib>=3.8
+
+# 推理链蒸馏（scripts/distill_cot.py，调教师与校验模型的 OpenAI 兼容接口）
+openai>=1.40
