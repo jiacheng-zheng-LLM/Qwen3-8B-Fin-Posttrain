@@ -3,15 +3,43 @@
 **Two-stage post-training (LoRA SFT → GRPO) of Qwen3-8B for financial reasoning, on 6×RTX4090 (24 GB, no NVLink).**
 Includes the full experiment log, every evaluation artifact, and a documented **null result** for the RL stage.
 
-> This is an independent reproduction of the recipe described in **DianJin-R1**
-> ([arXiv:2504.15716](https://arxiv.org/abs/2504.15716)). It is **not affiliated with, endorsed by, or
-> derived from the DianJin authors' models or code.** "DianJin-R1" appears here only as a citation.
+---
+
+## 项目简介
+
+**背景。** 通用大模型在金融场景的短板不是不会算，而是"给结论不给过程"。金融是强合规领域，
+一个无法审计推理链条的答案在业务上不可用。业界对此的解法是**两阶段后训练**——先用带推理链的数据
+做监督微调让模型学会"先想后答"，再用可验证的规则奖励做强化学习把正确率顶上去。
+该范式的代表工作是阿里的 DianJin-R1（[arXiv:2504.15716](https://arxiv.org/abs/2504.15716)）。
+
+**问题。** 这套范式的公开复现存在三个缺口：① 论文基于全参微调与数据中心级算力，
+**消费级显卡上能否跑通、瓶颈在哪里**没有答案；② 论文的强化学习难例集依赖
+"教师模型重试失败 + GPT-4o 判推理一致性"的主观判难，**该数据未开源**，无法照搬；
+③ 论文只报告正向结果，**RL 阶段在什么条件下会失效**没有交代。
+
+**实现。** 本项目在 **6×RTX4090（24 GB，无 NVLink，共享机器）** 上以**纯 LoRA** 独立复现该范式，
+基座 **Qwen3-8B**，框架 **ms-swift**。训练数据的题干为 CFLUE 与 FinQA 的真实金融考题
+（题集划分与规模照论文 Table 1，共 36 568 条），**推理链由本项目用 DeepSeek-V4-Pro-0813 重新蒸馏**，
+未使用上游发布的数据集（详见 [DISTILLATION.md](DISTILLATION.md)）。难例筛选改用**客观判据**：
+以 SFT 模型自身采样通过率 `c/k ∈ (0,1)` 为唯一条件——这恰是 GRPO 组内优势非零的充要条件，
+无需任何主观判断。24 GB 显存下的关键工程决策包括：用 liger kernel 融合交叉熵化解 152k 大词表
+LM 头的 logits 显存峰值（`max_length` 4096 → 5120，数据保留率 91.4% → **97.4%**）、
+实测无 NVLink 环境 all-gather 慢约 30× 后弃用 ZeRO-3 改 DDP + ZeRO-2。
+产出模型经质量门禁后以 3 副本 vLLM + Nginx 网关 + Prometheus 上线。
+
+**结果。** SFT 在中英金融与通用推理四个基准上同口径评测**全部提升，均值 +9.66 pp**，
+且通用数学与科学能力未退化反升。**GRPO 净效应约等于零**（均值 47.58 → 47.48）——
+根因定位到 `--ref_adapters` 把参考模型锚在 SFT 检查点上，导致 **KL 全程 ≈ 0（中位数 8.4e-4）、
+策略几乎没有离开起点**；同时 41.6% 的采样组内奖励全同，组内优势恒为 0、该批次无梯度。
+这个负结果，连同全过程的"现象 → 归因 → 修复"事故日志与全部评测 artifact，一并公开在本仓库。
 
 ---
 
 ## 结果速览
 
 统一口径：同一 prompt、从 `\boxed{}` 抽答案，accuracy = correct / n。全部有 artifact 支撑（`phase1-sft-grpo/eval/`）。
+
+![四基准同口径评测](phase1-sft-grpo/figures/fig1_benchmark_comparison.png)
 
 | 基准 | n | base | SFT | SFT+GRPO | GRPO Δ |
 |---|---|---|---|---|---|
@@ -23,44 +51,14 @@ Includes the full experiment log, every evaluation artifact, and a documented **
 
 **SFT 四基准全涨，均值 +9.66 pp**，且通用能力（MATH / GPQA）未退化反升。
 
-**GRPO 净效应 ≈ 0。** 这是本项目最主要的结论，也是它值得读的原因。
+**GRPO 净效应 ≈ 0。** 四个基准的 Δ 没有一个能与 0 区分开——以 GPQA 的 −2.53 pp 为例，
+它等于 198 题里少答对 5 题（约 0.62σ），且两侧准确率都低于 4 选 1 随机线，不承载能力信号。
 
----
+![GRPO KL 全程 ≈ 0](phase1-sft-grpo/figures/fig4_grpo_kl.png)
 
-## 为什么 GRPO 没涨——归因
-
-训练本身跑通了：1210 步、约 5 小时、峰值 22.7 GB/卡、`exit=0`、无 OOM。但：
-
-- **KL 全程 ≈ 0**（中位数 `8.4e-4`，全程最大 `7.2e-3`，β=0.04）。
-  根因是 `--ref_adapters` 把参考模型锚在 SFT checkpoint 上 → 过度正则 → **策略几乎没离开起点**。
-- **41.6% 的组内 reward 全同** → 组内优势恒为 0 → 该批次无梯度（`num_generations=4`，组太小）。
-- reward 曲线在 100 步窗口下首末完全相等（`0.721 → 0.721`）。
-
-**四个基准的 Δ 没有一个能与 0 区分开。** 以 GPQA 的 −2.53 pp 为例，它等于 198 题里少答对 5 题，
-约 `0.62σ`；在 n=198、p≈0.20 下需要差 **7.95 pp（16 题）** 才达到 p<0.05。且 SFT / GRPO 两侧
-准确率都**低于 4 选 1 随机线（25%）**，该分数本身不承载能力信号。所以正确的说法是
-"GRPO 净效应为零"，而不是"GRPO 在 GPQA 上退化"。
-
-**这个权衡有外部参照**：DianJin-R1 论文报告 GRPO 后 FinQA **−2.56 pp**（发生遗忘），
-本项目 FinQA **+1.24 pp**。同一个过度正则，既挡住了论文里的遗忘，也挡住了论文里的增益。
-
-> 教训：评估 GRPO 成败必须看 **KL 是否真的移动了策略**，而不是只看训练 reward 曲线——
-> 后者是批次难度噪声，会误导。详见 `phase1-sft-grpo/EXPERIMENT_LOG.md`。
-
----
-
-## 24 GB 卡上的工程约束
-
-这部分可能比结果更有参考价值：
-
-- **OOM 根因不是序列长度，是 152k 大词表的 LM 头 logits 峰值。** 引入 liger kernel 融合交叉熵后，
-  可训 `max_length` 从 4096 顶到 5120，数据保留率 91.4% → **97.4%**。6144 仍 OOM。
-- **无 NVLink 下 all-gather 慢约 30×** → 弃 ZeRO-3，改 DDP + ZeRO-2。
-- **难例筛选**：GRPO 的优势来自组内 reward 方差，全对/全错的样本梯度为零。
-  以采样通过率 `c/k ∈ (0,1)` 为唯一判据筛选，8000 题中全对 58.8% / 全错 11.0% ——
-  **随机抽题会把近 7 成算力打在零梯度样本上**。浓缩出 2421 条有梯度样本。
-- **生成长度**：均值 265 token，1210 步中仅 11 步触发截断（0.16%）→
-  `max_completion_length=1536` 不是瓶颈，显存该花在 `num_generations` 上。
+> 上图是零效应的直接证据：KL 中位数 `8.4e-4`、全程最大 `7.2e-3`（β=0.04），策略几乎没动过。
+> 完整归因见 [`phase1-sft-grpo/EXPERIMENT_LOG.md`](phase1-sft-grpo/EXPERIMENT_LOG.md)，
+> 另外 6 张图在 [`phase1-sft-grpo/figures/`](phase1-sft-grpo/figures/)（附英文版与逐图数据出处）。
 
 ---
 
@@ -106,7 +104,6 @@ pip install -r requirements.txt
 | `REPO_ROOT` | 仓库内 `phase1-sft-grpo/` 路径 | 可选，默认按脚本位置推断 |
 | `SWIFT_BIN` · `CONDA_INIT` · `CONDA_ENV` · `RUN_DIR` | swift 可执行文件、conda 激活、运行产物落盘目录 | 可选 |
 
-
 1. **准备上游依赖** —— 见 [DATA.md](DATA.md)。SFT 推理链需按 [DISTILLATION.md](DISTILLATION.md) 自行蒸馏。
 2. **SFT** —— 超参见 `phase1-sft-grpo/weights_archive/sft-lora-checkpoint-1113-FINAL/args.json`
    （LoRA r32/α64 all-linear，lr 1e-4，3 ep，max_length 5120 + liger 融合 CE，DDP/ZeRO-2）。
@@ -117,33 +114,11 @@ pip install -r requirements.txt
 6. **部署** —— `phase1-sft-grpo/deploy/README.md`：合并 → `deploy_gate.sh` 门禁 →
    compose 起 3 副本 + 网关 + Prometheus。
 
-**重绘图表**（只依赖 matplotlib）：
+**重绘图表**（只依赖 matplotlib，数据全在仓库内）：
 
 ```bash
 python3 phase1-sft-grpo/scripts/make_figures.py [--lang en] [--only 3 6]
 ```
-
----
-
-## 阅读须知
-
-- **全部运行记录不随仓库发布**（stdout 日志、`logging.jsonl`、tensorboard events）。
-  绘图所需的曲线与汇总数字已抽取到 `phase1-sft-grpo/artifacts/figure_inputs.json`，
-  含逐项出处；`make_figures.py` 只读该文件与 `eval/*.json`，8 张图全部可独立重绘。
-- **奖励函数在整理开源时改过名**：`dianjin_acc`/`dianjin_format` → `fin_acc`/`fin_format`。
-  归档的 `trainer_state.json` / `args.json` 是当时运行的**原始记录**，未做改写。
-- **SFT 的推理链是本项目自行蒸馏的**，不是上游数据集自带的那一份：题目集合与数据量
-  与论文 Table 1 逐项一致（CFLUE MCQ 26 672 / 开放题 5 045 / FinQA 4 851；题干为 CFLUE
-  与 FinQA 的真实考题，未使用上游 `DianJin-R1-Data` 数据集本身），重试策略
-  T=3 与 GPT-4o 一致性校验也照论文，**唯一改动是生成推理链的教师模型换成 DeepSeek V4 Pro**。
-  论文未披露 temperature / top_p / max_tokens，本项目采用教师模型
-  **DeepSeek-V4-Pro-0813 的官方推荐值**（temperature 1.0 / top_p 1.0 / 输出上限 384K）。
-  当时的蒸馏脚本与校验 prompt 已遗失，仓库内的 `scripts/distill_cot.py` 是按论文方法
-  **复原**的参考实现，**不是**产出本项目数据的原始脚本。仓库内的 `scripts/distill_cot.py` 是按论文方法**复原**的
-  参考实现，**不是**产出本项目数据的原始脚本。
-  **评测判分与难例筛选环节不调用任何外部大模型。**
-- **`EXPERIMENT_LOG.md` 内有 3 处后来复核发现写错的地方**，已就地加「2026-08-22 更正」注记并
-  保留原文，而非抹掉。三处的更正依据都能用本仓库的 artifact 复算。
 
 ---
 
