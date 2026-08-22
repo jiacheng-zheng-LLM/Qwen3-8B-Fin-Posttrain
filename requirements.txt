@@ -1,5 +1,5 @@
 # 训练 / 评测（Phase 1 实跑版本，务必锁定——见 EXPERIMENT_LOG 的版本类事故）
-ms-swift==4.4.2
+ms-swift==4.4.2            # https://github.com/modelscope/ms-swift
 vllm==0.26.0
 torch>=2.4
 transformers>=4.51            # 低于此版本会在加载合并模型 tokenizer 时崩溃

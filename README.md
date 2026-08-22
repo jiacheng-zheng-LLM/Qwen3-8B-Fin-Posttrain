@@ -12,7 +12,7 @@ Includes the full experiment log, every evaluation artifact, and a fully documen
 做监督微调让模型学会"先想后答"，再用可验证的规则奖励做强化学习把正确率顶上去。
 
 **实现。** 本项目在 **6×RTX4090** 上以 **SFT 中的 LoRA 进行监督微调**，
-**GRPO 阶段同样用 LoRA 续训**；基座 **Qwen3-8B**，框架 **ms-swift**。训练数据的题干为 CFLUE 与 FinQA 的真实金融考题
+**GRPO 阶段同样用 LoRA 续训**；基座 **Qwen3-8B**，框架 **[ms-swift](https://github.com/modelscope/ms-swift)**。训练数据的题干为 CFLUE 与 FinQA 的真实金融考题
 （共 36 568 条），**推理链由本项目用 DeepSeek-V4-Pro-0813 重新蒸馏**。难例筛选改用**客观判据**：
 以 SFT 模型自身采样通过率 `c/k ∈ (0,1)` 为唯一条件。用 liger kernel 融合交叉熵化解 152k 大词表
 LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**），并行策略采用 DDP + ZeRO-2。
@@ -27,8 +27,6 @@ LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**）
 ---
 
 ## 结果速览
-
-统一口径：同一 prompt、从 `\boxed{}` 抽答案，accuracy = correct / n。全部有 artifact 支撑（`eval/`）。
 
 ![四基准同口径评测](figures/fig1_benchmark_comparison.png)
 
