@@ -28,9 +28,9 @@ LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**）
 
 ## 结果速览
 
-统一口径：同一 prompt、从 `\boxed{}` 抽答案，accuracy = correct / n。全部有 artifact 支撑（`phase1-sft-grpo/eval/`）。
+统一口径：同一 prompt、从 `\boxed{}` 抽答案，accuracy = correct / n。全部有 artifact 支撑（`eval/`）。
 
-![四基准同口径评测](phase1-sft-grpo/figures/fig1_benchmark_comparison.png)
+![四基准同口径评测](figures/fig1_benchmark_comparison.png)
 
 | 基准 | n | base | SFT | SFT+GRPO | GRPO Δ |
 |---|---|---|---|---|---|
@@ -49,59 +49,55 @@ LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**）
 
 ## 图表
 
-全部由 `scripts/make_figures.py` 从仓库内 artifact 重绘，非手工产物；英文版在
-[`figures/en/`](phase1-sft-grpo/figures/en/)，逐图数据出处见
-[`figures/README.md`](phase1-sft-grpo/figures/README.md)。
+英文版在 [`figures/en/`](figures/en/)，逐图数据出处见
+[`figures/README.md`](figures/README.md)。
 
 **SFT 收敛**：loss 1.069 → 0.692，图中标出 3 个 epoch 边界。
 
-![SFT loss](phase1-sft-grpo/figures/fig2_sft_loss.png)
+![SFT loss](figures/fig2_sft_loss.png)
 
 **GRPO 为什么没涨**：上图 reward 首/末 100 步 `0.721 → 0.721` 完全持平；
 下图平均 **41.6%** 的采样组奖励全同 → 组内优势恒为 0 → 该批次无梯度。
 
-![GRPO reward](phase1-sft-grpo/figures/fig3_grpo_reward.png)
+![GRPO reward](figures/fig3_grpo_reward.png)
 
 **零效应的直接证据**：KL 中位数 `8.4e-4`、全程最大 `7.2e-3`（β=0.04），策略几乎没动过。
 
-![GRPO KL](phase1-sft-grpo/figures/fig4_grpo_kl.png)
+![GRPO KL](figures/fig4_grpo_kl.png)
 
 **客观难例筛选器**：8000 题中全对 58.8% / 混合 **30.3%** / 全错 11.0%——
 随机抽题会把近 7 成算力打在零梯度样本上。
 
-![难例分布](phase1-sft-grpo/figures/fig5_hardcase_distribution.png)
+![难例分布](figures/fig5_hardcase_distribution.png)
 
 **max_length 消融**：①显存 4096 跑通 19.76 GB / 5120 跑通 20.46 GB / 6144 **OOM**；
 ②数据保留 3072 为 91.4% / 4096 为 95.2% / 5120 为 **97.4%** → 5120 是交点。
 
-![max_length 消融](phase1-sft-grpo/figures/fig6_maxlen_ablation.png)
+![max_length 消融](figures/fig6_maxlen_ablation.png)
 
 **生产压测**：并发 24/48/96 → 12.66 req/s、P95 11.0 s。单 TP2 副本 12.79 ≈ 集群 12.66，
 说明此负载下副本未饱和，集群价值在容量余量与 HA。
 
-![部署压测](phase1-sft-grpo/figures/fig7_deploy_loadtest.png)
+![部署压测](figures/fig7_deploy_loadtest.png)
 
 **生成长度**：均值 265 token，1210 步中仅 11 步触发截断（0.16%）→
 `max_completion_length=1536` 不是瓶颈，显存该花在 `num_generations` 上。
 
-![生成长度](phase1-sft-grpo/figures/fig8_completion_length.png)
+![生成长度](figures/fig8_completion_length.png)
 
 ---
 
 ## 仓库结构
 
 ```
-phase1-sft-grpo/            SFT → 难例筛选 → GRPO → 评测 → 部署
+            SFT → 难例筛选 → GRPO → 评测 → 部署
   EXPERIMENT_LOG.md         全程实验/事故日志（每次失败的现象-归因-修复）
   REPORT-sft.md             SFT 阶段三方对比交付报告
   scripts/                  数据构建、训练编排、评测、部署门禁与压测
     distill_cot.py          推理链蒸馏（复原的参考实现）
-    make_figures.py         一键从 artifact 重绘全部图表
   plugin/fin_orm.py         GRPO 双奖励插件（fin_acc + fin_format）
   eval/                     15 个评测结果 JSON（base / sft / grpo / gate 四档 + smoke）
   figures/                  16 张图表（中文 8 + en/ 英文 8）+ 逐图数据出处
-  artifacts/                绘图所需的全部曲线与汇总数字（从运行记录抽出，含出处）
-  weights_archive/          4 个 LoRA checkpoint 的超参、trainer_state、SHA256SUMS
   deploy/                   compose + Nginx 网关 + Prometheus + DEPLOY_LOG
   data/                     自建难例 RL 集
 
@@ -127,24 +123,17 @@ pip install -r requirements.txt
 | `MERGED_MODEL` | 合并后的全量模型目录 | 上线门禁 |
 | `SFT_DATA_DIR` | 蒸馏产出的 SFT 数据目录 | 难例筛选 |
 | `EVAL_DATA_DIR` | 评测集根目录（见 [DATA.md](DATA.md)） | 评测 |
-| `REPO_ROOT` | 仓库内 `phase1-sft-grpo/` 路径 | 可选，默认按脚本位置推断 |
+| `REPO_ROOT` | 仓库根目录 | 可选，默认按脚本位置推断 |
 | `SWIFT_BIN` · `CONDA_INIT` · `CONDA_ENV` · `RUN_DIR` | swift 可执行文件、conda 激活、运行产物落盘目录 | 可选 |
 
 1. **准备上游依赖** —— 见 [DATA.md](DATA.md)。SFT 推理链需按 [DISTILLATION.md](DISTILLATION.md) 自行蒸馏。
-2. **SFT** —— 超参见 `phase1-sft-grpo/weights_archive/sft-lora-checkpoint-1113-FINAL/args.json`
-   （LoRA r32/α64 all-linear，lr 1e-4，3 ep，max_length 5120 + liger 融合 CE，DDP/ZeRO-2）。
+2. **SFT** —— LoRA r32/α64 all-linear，lr 1e-4，3 epoch，max_length 5120 + liger 融合 CE，DDP/ZeRO-2。
 3. **难例筛选** —— `scripts/build_hardcase_rl.py`：k=4 采样，只留 `0 < c/k < 1`。
-4. **GRPO** —— `scripts/grpo_full.sh`，奖励插件 `plugin/fin_orm.py`，
-   超参见 `weights_archive/grpo-lora-checkpoint-1210-FINAL/args.json`。
+4. **GRPO** —— `scripts/grpo_full.sh`，奖励插件 `plugin/fin_orm.py`；
+   lr 1e-6，β=0.04，num_generations 4，max_completion_length 1536，1 epoch = 1210 步。
 5. **评测** —— `scripts/eval_fin.py` + `scripts/run_all_eval.sh`。
-6. **部署** —— `phase1-sft-grpo/deploy/README.md`：合并 → `deploy_gate.sh` 门禁 →
+6. **部署** —— `deploy/README.md`：合并 → `deploy_gate.sh` 门禁 →
    compose 起 3 副本 + 网关 + Prometheus。
-
-**重绘图表**（只依赖 matplotlib，数据全在仓库内）：
-
-```bash
-python3 phase1-sft-grpo/scripts/make_figures.py [--lang en] [--only 3 6]
-```
 
 ---
 

@@ -11,7 +11,7 @@ os.environ.setdefault("VLLM_ATTENTION_BACKEND", "TORCH_SDPA")
 os.environ.setdefault("NCCL_P2P_DISABLE", "1")
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 HERE = os.path.dirname(__file__)
-PROJ = os.environ.get("REPO_ROOT", str(Path(__file__).resolve().parent.parent.parent))
+PROJ = os.environ.get("REPO_ROOT", str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, os.path.join(PROJ, "src"))
 
 # fin_verify 是内部数值判分模块,不随本仓库发布;缺失时用下面的等价兜底。

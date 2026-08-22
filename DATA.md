@@ -29,7 +29,7 @@ SFT 数据由两部分组成，来源不同，须分开看：
 | **MATH-500 / GPQA-diamond** | 通用能力评测集 | 8.8 M | HF 公开 | 各自原始许可 |
 
 推理链需按 [DISTILLATION.md](DISTILLATION.md) 自行蒸馏——原始蒸馏脚本已遗失，
-仓库内提供复原的参考实现 `phase1-sft-grpo/scripts/distill_cot.py`。
+仓库内提供复原的参考实现 `scripts/distill_cot.py`。
 
 ---
 
@@ -37,8 +37,8 @@ SFT 数据由两部分组成，来源不同，须分开看：
 
 | 文件 | 条数 | 内容 | 说明 |
 |---|---|---|---|
-| `phase1-sft-grpo/data/grpo_hardcase.jsonl` | 2 421 | 难例 RL 集：**题干 + 标答，不含推理链** | 筛选逻辑是本项目产出；题干为第三方真实考题，使用时须遵守其原始条款 |
-| `phase1-sft-grpo/data/grpo_hardcase_smoke.jsonl` | 200 | 上者的冒烟子集 | 同上 |
+| `data/grpo_hardcase.jsonl` | 2 421 | 难例 RL 集：**题干 + 标答，不含推理链** | 筛选逻辑是本项目产出；题干为第三方真实考题，使用时须遵守其原始条款 |
+| `data/grpo_hardcase_smoke.jsonl` | 200 | 上者的冒烟子集 | 同上 |
 
 难例集是本项目用 `c/k ∈ (0,1)` 通过率筛出来的，不是现成文件的搬运。
 若你偏好零再分发，可删掉这两个文件，用 `scripts/build_hardcase_rl.py` 从自己的数据重新筛。

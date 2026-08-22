@@ -51,7 +51,7 @@
 
 > **2026-08-22 更正**:本条原写作「定稿 max_length 4096 / 4096 为 liger 安全上限」,
 > 那是 4096 跑通、5120 还没试之前写下的,后续做了 5120 并采用,但本条没回改。
-> 实证依据:`weights_archive/sft-lora-checkpoint-1113-FINAL/args.json` 中 `max_length: 5120`;
+> 实证依据:定稿 SFT 配置中 `max_length: 5120`;
 > 原 `logs/liger_test_5120.log` 无 OutOfMemory、峰值 20.46GB;原 `logs/prefilter5120.log` 保留 97.4%
 > (4096 档为 95.2%)。文件头「全量 LoRA SFT v3」与 项目梳理记的 5120 是对的。
 - 教训:大词表 LLM 微调 OOM,优先 liger 融合 CE(Triton,低风险),而非死缩序列或上 zero3。liger 与极前沿 transformers 5.8 兼容(apply_liger_kernel_to_qwen3 生效)。
@@ -142,8 +142,8 @@ GRPO smoke→full 一路踩的环境坑(非方法问题,均已定位修复,SFT �
 **训练**:`checkpoint-1210`(adapter 174MB),1210 步 ~5h,峰值~22.7GB/卡,exit=0,无 OOM。KL 全程≈0(中位数 8.4e-4,全程最大 7.2e-3);批次 reward 首20 0.773→末20 **0.731**、acc 首20 0.675→末20 **0.631**(**不同批难度噪声,非模型退化**;KL≈0 说明策略几乎未移动)。放宽到 100 步窗口则 reward 0.721→0.721、acc 0.6225→0.6225,**完全持平**。
 
 > **2026-08-22 更正**:本条原写作「末20 reward 0.659、acc 0.569」,复算对不上——
-> 首20 的 0.773 / 0.675 与训练指标记录(现已抽取为 `artifacts/figure_inputs.json` 的 `grpo`)精确一致,末20 应为 0.731 / 0.631
-> (复算脚本:`scripts/make_figures.py` 图3,读全部 1210 步)。原数字把降幅写大了约 7pp;
+> 首20 的 0.773 / 0.675 与训练指标记录精确一致,末20 应为 0.731 / 0.631
+> (读全部 1210 步复算)。原数字把降幅写大了约 7pp;
 > 更正后降幅更小,而"策略几乎未移动"的结论不变、反而更稳——100 步窗口下首末完全相等。
 
 **最终评测(base→SFT→GRPO,同口径 eval_fin.py,TP=4/GPU3-6)**:

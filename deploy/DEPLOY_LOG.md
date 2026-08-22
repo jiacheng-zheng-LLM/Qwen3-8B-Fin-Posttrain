@@ -11,7 +11,7 @@
 
 ## 阶段① 合并(merge)
 - 目标:base + GRPO checkpoint-1210(SFT+GRPO 合体)→ 不可变全量模型 qwen3-fin-v1.0。
-- **非破坏保证**:输出到新目录 deploy/models/qwen3-fin-v1.0,只读 base 与 adapter,weights_archive 不受影响。
+- **非破坏保证**:输出到新目录 deploy/models/qwen3-fin-v1.0,只读 base 与 adapter,adapter 留档 不受影响。
 
 ### 阶段① 合并 —— ✅ 完成
 - 产物:`deploy/models/qwen3-fin-v1.0`(16G,4 shards,swift 4.4.2 "Successfully merged")。
@@ -136,7 +136,7 @@ Nginx 网关(:4000)→ vllm-r1(GPU2,3 TP2)/ r2(GPU4,5 TP2)/ r3(GPU6 TP1);Prometh
 ### 可复用资产
 - `deploy/docker-compose.{yml,run.yml}`、`gateway/nginx.conf`、`monitoring/prometheus.yml`;
 - `scripts/{deploy_gate.sh,deploy_smoke_client.py}`;`deploy/README.md`(runbook);
-- 模型工件 `deploy/models/qwen3-fin-v1.0`(合并前 adapter 在 `weights_archive/`,可回退)。
+- 模型工件 `deploy/models/qwen3-fin-v1.0`(合并前 adapter 另行留档,可回退)。
 
 ### 关键教训(可迁移)
 1. **服务镜像的框架版本必须锁定=训练/合并版本**(D-7/D-8/D-12 同源);
@@ -173,7 +173,7 @@ Nginx 网关(:4000)→ vllm-r1(GPU2,3 TP2)/ r2(GPU4,5 TP2)/ r3(GPU6 TP1);Prometh
 - **12 个真实问题**:D-1~D-12(环境/网络、镜像版本匹配、负载均衡三连查、共享机器动态占用);
 - **加演A 压测**:集群/单副本吞吐·延迟,两个诚实发现(单副本未饱和≈集群、TP1 straggler);
 - **加演B 灰度**:金丝雀 11% 分流 → 健康门禁 → 全量提升 → 回滚路径。
-- **配套资产**:docker-compose.{yml,run.yml}、gateway/nginx.conf、monitoring/prometheus.yml、README.md(runbook)、scripts/{deploy_gate.sh,deploy_smoke_client.py,deploy_loadtest.py}、models/qwen3-fin-v1.0(合并前 adapter 存 weights_archive/,可回退)。
+- **配套资产**:docker-compose.{yml,run.yml}、gateway/nginx.conf、monitoring/prometheus.yml、README.md(runbook)、scripts/{deploy_gate.sh,deploy_smoke_client.py,deploy_loadtest.py}、models/qwen3-fin-v1.0(合并前 adapter 存 adapter 留档目录/,可回退)。
 - **五条可迁移教训**:①镜像框架版本=训练版本;②bind-mount 单文件改后必重建容器;③nginx 负载均衡设 worker_processes 1;④共享机器每步复查 GPU/端口;⑤localhost 一律 NO_PROXY。
 
 ## 停服释放 GPU(会话收尾)

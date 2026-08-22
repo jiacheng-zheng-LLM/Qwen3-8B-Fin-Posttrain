@@ -4,7 +4,7 @@ set -u
 # 按需激活你的环境,例如: source ~/miniconda3/etc/profile.d/conda.sh; conda activate <env>
 [ -n "${CONDA_INIT:-}" ] && source "$CONDA_INIT" && conda activate "${CONDA_ENV:-base}"
 # ---- 必填环境变量 ----
-#   REPO_ROOT   本目录的上级(phase1-sft-grpo/);默认按脚本位置推断
+#   REPO_ROOT   仓库根目录;默认按脚本位置推断
 #   BASE_MODEL  基座 Qwen3-8B 路径
 #   SFT_ADAPTER SFT 产出的 LoRA adapter 目录(checkpoint-1113)
 ROOT="${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"

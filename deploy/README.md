@@ -23,7 +23,7 @@ CUDA_VISIBLE_DEVICES=0 MKL_THREADING_LAYER=GNU \
   swift export --adapters <grpo-ckpt-1210> --merge_lora true \
   --output_dir deploy/models/qwen3-fin-v1.0
 ```
-> 合并前 adapter 保留在 `weights_archive/`,sha256 可校验;随时可回到未合并态。
+> 合并前的 adapter 单独留档并有 sha256 可校验;随时可回到未合并态。
 
 ### 2. 质量门禁(上线前必过)
 ```bash
@@ -63,7 +63,7 @@ curl http://127.0.0.1:4000/v1/chat/completions -H 'Content-Type: application/jso
 ## 灰度与回滚
 - **灰度**:新版本先起 1 副本接小流量(网关 upstream 加权),指标正常再扩到 3 副本;
 - **回滚(合并态)**:`docker compose down` 后把 compose 的 model 指向上一版本 `qwen3-fin-vX`,`up -d`;
-- **回滚到未合并态**:停容器,用 base + `weights_archive/grpo-lora-checkpoint-1210-FINAL` 挂 LoRA 服务(vLLM `--enable-lora`);合并工件为派生物,删了可从 base+adapter 重建。
+- **回滚到未合并态**:停容器,用 base + GRPO adapter(checkpoint-1210)挂 LoRA 服务(vLLM `--enable-lora`);合并工件为派生物,删了可从 base+adapter 重建。
 
 ## 停服 / 清理
 ```bash
