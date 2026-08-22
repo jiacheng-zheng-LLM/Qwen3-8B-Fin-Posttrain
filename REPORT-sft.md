@@ -3,7 +3,7 @@
 > 在 **ms-swift** 框架下对 **Qwen3-8B** 做 **LoRA SFT → LoRA GRPO** 两阶段后训练。
 > 硬件:6×RTX4090。数据:题目为 CFLUE 与 FinQA 的真实金融考题,
 > **推理链由本项目用 DeepSeek-V4-Pro-0813 蒸馏产出**,
-> 详见 [`DISTILLATION.md`](../DISTILLATION.md)。**判分与难例筛选环节不调用任何外部大模型**
+> 详见 [`DISTILLATION.md`](DISTILLATION.md)。**判分与难例筛选环节不调用任何外部大模型**
 > (FinQA 用 `fin_verify` 数值判分替 GPT-4o judge;难例用客观 `c/k` 筛选器替 R1+GPT-4o 判难)。
 > 状态:**SFT + GRPO 全流程已完成并评测(base→SFT→GRPO 三方同口径)。**
 
@@ -26,7 +26,7 @@
 - 各项 Δ 超噪声;通用推理(MATH/GPQA)也涨(结构化推理数据泛化)。
 - SFT 交付 checkpoint:**checkpoint-1113**(另产出合并后的全量权重用于部署);超参见 `weights_archive/sft-lora-checkpoint-1113-FINAL/args.json`。
 
-## 三、GRPO 方法学(设计已定稿,运行中)
+## 三、GRPO 方法学
 
 ### 3.1 核心问题与我们的解法
 常见做法是用"教师模型重试若干次仍失败"来判难,但它依赖"教师做不出来"这一主观代理量,与 GRPO 实际需要的梯度条件并不等价。→ 我们**自建客观难例筛选器**:
@@ -74,7 +74,7 @@ artifact:`eval/eval_{cflue,finqa,math500,gpqa}_grpo.json`。
 4. **量级符合预期**:受限 RL 相对强 SFT 的增益本就在个位数 pp 量级;本项目更保守的配置把增益压到≈0,换来跨任务稳定(FinQA +1.3);同族于本项目早先 RFT/SC 的 null——**强多任务 SFT 之上受限 RL 边际增益有限**。
 5. **若要 GRPO 真涨的下一步(未执行,留决策)**:降 β(0.04→0.01)/去 ref_adapters 放开策略移动、或扩大奖励覆盖到多任务——但均需再花一轮算力,当前作为诚实负结果收官。
 
-## 四、诚实标注(不可夸大)
+## 四、诚实标注
 
 1. **格式合规成分**:base 不总用 boxed → base 分被压低(GPQA base 11%<随机25%);SFT 涨幅=真能力+格式合规;
 2. **FinQA 判分**:用 fin_verify 数值判分,**评测环节不引入 LLM 判分** → 与采用 LLM judge 的实现不可直接对标;

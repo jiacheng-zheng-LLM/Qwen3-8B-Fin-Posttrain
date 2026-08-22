@@ -99,7 +99,7 @@ LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**）
   eval/                     15 个评测结果 JSON（base / sft / grpo / gate 四档 + smoke）
   figures/                  16 张图表（中文 8 + en/ 英文 8）+ 逐图数据出处
   weights_archive/          4 个 LoRA checkpoint 的完整超参、trainer_state、SHA256SUMS
-  deploy/                   compose + Nginx 网关 + Prometheus + DEPLOY_LOG
+  deploy/                   compose + Nginx 网关 + Prometheus 配置
   data/                     自建难例 RL 集
 
 DATA.md                     上游数据去哪取、什么许可、仓库里保留了什么
@@ -135,8 +135,8 @@ pip install -r requirements.txt
    lr 1e-6，β=0.04，num_generations 4，max_completion_length 1536，1 epoch = 1210 步；
    完整超参见 `weights_archive/grpo-lora-checkpoint-1210-FINAL/args.json`。
 5. **评测** —— `scripts/eval_fin.py` + `scripts/run_all_eval.sh`。
-6. **部署** —— `deploy/README.md`：合并 → `deploy_gate.sh` 门禁 →
-   compose 起 3 副本 + 网关 + Prometheus。
+6. **部署** —— 合并 → `scripts/deploy_gate.sh` 质量门禁 →
+   `deploy/docker-compose.yml` 起 3 副本 vLLM + Nginx 网关 + Prometheus。
 
 ---
 

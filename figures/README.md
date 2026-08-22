@@ -14,19 +14,8 @@
 | `fig4_grpo_kl.png` | **核心归因**:KL 中位数 8.4e-4、全程最大 7.2e-3,β=0.04。`--ref_adapters` 把参考模型锚在 SFT → 过度正则 → 策略几乎没移开起点 | 同上 |
 | `fig5_hardcase_distribution.png` | 自建客观难例筛选器:8000 题中全对 58.8% / 混合 **30.3%** / 全错 11.0%。随机抽题会把近 7 成算力打在零梯度样本上 | 见下方「数据出处」 |
 | `fig6_maxlen_ablation.png` | max_length 消融双面板:①显存 4096 跑通 19.76 / 5120 跑通 20.46 / 6144 **OOM**;②数据保留 3072 91.4% / 4096 95.2% / 5120 **97.4%** → 5120 是交点 | 见下方「数据出处」 |
-| `fig7_deploy_loadtest.png` | 生产压测:并发 24/48/96 → 12.66 req/s、P95 11.0s;**单 TP2 副本 12.79 ≈ 集群 12.66**,说明此负载下副本未饱和,集群价值在容量余量与 HA | `deploy/DEPLOY_LOG.md`「加演A」 |
+| `fig7_deploy_loadtest.png` | 生产压测:并发 24/48/96 → 12.66 req/s、P95 11.0s;**单 TP2 副本 12.79 ≈ 集群 12.66**,说明此负载下副本未饱和,集群价值在容量余量与 HA | 见下方「数据出处」 |
 | `fig8_completion_length.png` | 生成长度均 265 token,1210 步中仅 11 步出现截断(平均 0.16%)→ `max_completion_length=1536` 不是瓶颈,显存该花在 `num_generations` 上 | 见下方「数据出处」 |
-
-## 为什么要重画
-
-ms-swift 训练时会自动出图,但只对 `loss` / `grad_norm` /
-`learning_rate` 做了平滑。GRPO 的 `reward`、`rewards/FinAcc/mean`、
-`completions/*_length` 是**未平滑的逐步原始值**,1210 步画出来是一整片实心色块,
-读不出任何趋势 —— 恰好这几条才是"GRPO 有没有真涨"的关键证据。另外图 1、5、6、7
-这四张 ms-swift 根本不会生成。
-
-`train_grad_norm.png`、`train_learning_rate.png`(本目录 `fig2` 是同一份数据的重绘版,
-补了坐标轴标签与 epoch 边界)。
 
 ## 平滑口径
 
@@ -58,7 +47,7 @@ flowchart LR
 | fig2 · fig3 · fig4 · fig8 | SFT / GRPO 训练过程的逐步指标记录 |
 | fig5 | 难例筛选器（`scripts/build_hardcase_rl.py`）的运行汇总 |
 | fig6 | 各 `max_length` 档的峰值显存、OOM 判定与预过滤保留率 |
-| fig7 | 部署压测（`scripts/deploy_loadtest.py`），另见 `deploy/DEPLOY_LOG.md` |
+| fig7 | 部署压测（`scripts/deploy_loadtest.py`） |
 
 图中标注的每个数字都能在 `EXPERIMENT_LOG.md` 与 `REPORT-sft.md` 里找到对应记载。
 原始运行记录不随仓库发布，故这批图以静态 PNG 形式提供，中文版在本目录、英文版在 `en/`。

@@ -130,7 +130,7 @@ GRPO smoke→full 一路踩的环境坑(非方法问题,均已定位修复,SFT �
 ## 数据落地(已核验)
 - 题目源:CFLUE 与 FinQA 的真实考题;落盘文件名为小写 `train/{cflue_mcq,cflue_oe,fin_qa}.json`。
 - **推理链(CoT)由本项目用 DeepSeek-V4-Pro-0813 蒸馏产出**,教师生成 → 双判据校验 → 最多 3 次重试,
-  失败样本降级为 non-reasoning。产物落在 `data/train/` 下。详见 [`DISTILLATION.md`](../DISTILLATION.md)。
+  失败样本降级为 non-reasoning。产物落在 `data/train/` 下。详见 [`DISTILLATION.md`](DISTILLATION.md)。
 - 去污染:CFLUE test 重叠 0%;FinQA test 重叠 37 条(0.76%)已从训练剔除 → `fin_qa.decontam.json`(4814)。
 - 格式:think/answer 各 100% 恰好一个;boxed 命中 cflue_mcq/fin_qa 100%、cflue_oe 6%(开放题无 boxed,仅 SFT)。
 - S1 模板验证:Qwen3 默认模板 SFT 不产生双 think;仅误设 `enable_thinking=false` 才注入空 think → 全程严禁该参数。
