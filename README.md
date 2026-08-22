@@ -13,8 +13,7 @@ Includes the full experiment log, every evaluation artifact, and a documented **
 
 **实现。** 本项目在 **6×RTX4090** 上以**纯 LoRA** 独立复现该范式，
 基座 **Qwen3-8B**，框架 **ms-swift**。训练数据的题干为 CFLUE 与 FinQA 的真实金融考题
-（题集划分与规模照 DianJin-R1（[arXiv:2504.15716](https://arxiv.org/abs/2504.15716)）论文 Table 1，
-共 36 568 条），**推理链由本项目用 DeepSeek-V4-Pro-0813 重新蒸馏**。难例筛选改用**客观判据**：
+（共 36 568 条），**推理链由本项目用 DeepSeek-V4-Pro-0813 重新蒸馏**。难例筛选改用**客观判据**：
 以 SFT 模型自身采样通过率 `c/k ∈ (0,1)` 为唯一条件。用 liger kernel 融合交叉熵化解 152k 大词表
 LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**），并行策略采用 DDP + ZeRO-2。
 产出模型经质量门禁后以 3 副本 vLLM + Nginx 网关 + Prometheus 上线。
@@ -96,7 +95,7 @@ phase1-sft-grpo/            SFT → 难例筛选 → GRPO → 评测 → 部署
   EXPERIMENT_LOG.md         全程实验/事故日志（每次失败的现象-归因-修复）
   REPORT-sft.md             SFT 阶段三方对比交付报告
   scripts/                  数据构建、训练编排、评测、部署门禁与压测
-    distill_cot.py          推理链蒸馏（按论文方法复原的参考实现）
+    distill_cot.py          推理链蒸馏（复原的参考实现）
     make_figures.py         一键从 artifact 重绘全部图表
   plugin/fin_orm.py         GRPO 双奖励插件（fin_acc + fin_format）
   eval/                     15 个评测结果 JSON（base / sft / grpo / gate 四档 + smoke）

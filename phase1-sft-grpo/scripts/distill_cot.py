@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""distill_cot.py — 推理链蒸馏（按 DianJin-R1 论文方法复原的参考实现）。
+"""distill_cot.py — 推理链蒸馏（复原的参考实现）。
 
 ⚠️ 这是**复原件**，不是产出本项目 SFT 数据的原始脚本（原始脚本已遗失）。
-   它依据论文 arXiv:2504.15716 公开描述的流程重写，供他人复现使用。
-   用它重跑**不保证**得到与本项目完全相同的数据：当时的生成超参未留存记录，
-   且教师模型本身带采样随机性。详见仓库根目录 DISTILLATION.md。
+   它按 DISTILLATION.md 记录的流程重写，供他人复现使用。用它重跑**不保证**
+   得到与本项目完全相同的数据：校验 prompt 的原始措辞已无从考证，且
+   temperature=1.0 下教师模型本身带采样随机性。
 
-论文描述的流程（本脚本实现的部分）：
+流程（见 DISTILLATION.md §2）：
   1. 教师模型对每道题生成 <think> 推理 + <answer> 含 \\boxed{} 的答案；
   2. 校验两个判据 —— ① 抽出的答案 == 标准答案；② 推理与参考解释一致（LLM 判）；
   3. 最多尝试 T=3 次；三次都不通过 → 该题降级为 non-reasoning 样本（只留题面+标答）。
@@ -38,7 +38,7 @@ BOX = re.compile(r"\\boxed\{(.*?)\}", re.S)
 THINK = re.compile(r"<think>(.*?)</think>", re.S)
 ANSWER = re.compile(r"<answer>(.*?)</answer>", re.S)
 
-MAX_ATTEMPTS = 3          # 论文 T=3
+MAX_ATTEMPTS = 3          # 每题最多尝试 3 次
 NUM_RE = re.compile(r"-?\d+(?:\.\d+)?")
 
 
@@ -59,7 +59,7 @@ GEN_PROMPT_NUM = """You are a financial analysis expert. Answer the question usi
 Please reason step by step, and put your final answer within \\boxed{{}}.
 """
 
-# 复原版校验 prompt —— 按论文描述的两个判据构造。
+# 复原版校验 prompt —— 按 DISTILLATION.md §2 的两个判据构造。
 # 原始 prompt 已遗失，措辞与当时使用的大概率不同。
 VERIFY_PROMPT = """You are checking one distilled reasoning sample. Judge two things independently.
 
@@ -104,7 +104,7 @@ def extract_answer(text):
 
 
 def format_ok(text):
-    """论文的结构约束:恰好一个 <think>、恰好一个 <answer>、且 answer 内有 boxed。"""
+    """结构约束:恰好一个 <think>、恰好一个 <answer>、且 answer 内有 boxed。"""
     return (len(THINK.findall(text or "")) == 1
             and len(ANSWER.findall(text or "")) == 1
             and extract_answer(text) is not None)
@@ -160,7 +160,7 @@ def build_sample(question, reasoning, answer_text, gold):
 
 
 def build_non_reasoning(question, gold):
-    """论文:三次尝试都失败 → 降级保留为 non-reasoning 样本。"""
+    """三次尝试都失败 → 降级保留为 non-reasoning 样本。"""
     return {
         "messages": [
             {"role": "user", "content": question},
@@ -194,7 +194,7 @@ def gen_once(client, model, question, task, gen_kwargs):
 
 
 def verify(client, model, question, gold, reference, reasoning, predicted):
-    """论文的双判据校验。返回 (answer_match, reasoning_consistent)。"""
+    """双判据校验。返回 (answer_match, reasoning_consistent)。"""
     r = client.chat.completions.create(
         model=model, temperature=0,
         messages=[{"role": "user", "content": VERIFY_PROMPT.format(

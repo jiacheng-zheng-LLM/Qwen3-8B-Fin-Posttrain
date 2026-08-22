@@ -78,7 +78,7 @@
   - **c=4 全对 58.8%(4702)**——SFT 已稳定会,GRPO **优势=0 零梯度,白训** → 排除;
   - **0<c<4 混合 30.3%(2421)**——**有梯度,RL 有信号** → **保留为 RL 数据**;
   - c=0 全错 11.0%(877)——无正样本可强化 → 排除。
-- **#2 实证坐实**:若随机抽 4096 做 RL,~58.8% 是零梯度题,近 6 成算力浪费;客观筛子浓缩出 2421 条有梯度难例。**纯客观、可复现、零 R1/零 GPT-4o**(替代论文的 R1+GPT-4o 判难,非复现原法)。
+- **#2 实证坐实**:若随机抽 4096 做 RL,~58.8% 是零梯度题,近 6 成算力浪费;客观筛子浓缩出 2421 条有梯度难例。**纯客观、可复现、判难环节零 LLM 调用**。
 
 ### GRPO 关键决策(经深度分析,部分与原项目相反)
 - **合并 SFT LoRA(与原项目不同)**:原项目 GRPO 用 `--adapters`(不合并,KL锚base);**本场景是"多任务SFT(4基准全涨)+单任务窄奖励(仅CFLUE)"→ 遗忘风险高 → 合并使 KL 锚 SFT 保护另3任务增益**。`swift export --merge_lora` 产出合并后的全量模型。
@@ -109,7 +109,7 @@ GRPO smoke→full 一路踩的环境坑(非方法问题,均已定位修复,SFT �
 ### ✅ 全量 GRPO proven 配置(2026-08-18,已稳定运行越过 step6 OOM 点)
 - **部署**:rollout vLLM server TP=2(GPU **5,6**,util 0.8,async_engine)+ 训练 DDP(GPU **3,4** 两张最稳空闲卡,避开动荡的 GPU0/nilmtk、GPU2/ollama)。**注意 2卡≠省显存(DDP每卡都存整份base~21GB),纯为避开被占卡;代价=比4卡慢~2×**。
 - **模型/数据**:`--model BASE --adapters <SFT ckpt-1113> --ref_adapters <同>`(KL锚SFT护多任务)+ RL 数据=客观难例 `grpo_hardcase.jsonl`(2421,c/k∈(0,1))。
-- **超参**:LoRA r32/α64,num_generations **4**(8会OOM),max_completion **1536**(实测均长~250,不吃紧),bs1,ga4,lr1e-6,β0.04,1 epoch=**1210步**,DianJin双奖励(acc1.0+format0.1)。
+- **超参**:LoRA r32/α64,num_generations **4**(8会OOM),max_completion **1536**(实测均长~250,不吃紧),bs1,ga4,lr1e-6,β0.04,1 epoch=**1210步**,双奖励(acc1.0+format0.1)。
 - **env(必带)**:MKL_THREADING_LAYER=GNU、VLLM_USE_FLASHINFER_SAMPLER=0、NCCL_P2P_DISABLE=1、expandable_segments、**HTTP_PROXY= + NO_PROXY=127.0.0.1,localhost**(不然训练器连不上本地 rollout)。
 - **实测**:每步 ~12-15s,全量 ~4.5-5h,峰值 ~22.5GB/卡;KL 有界,无 OOM。脚本 `scripts/grpo_full.sh`。
 
@@ -122,16 +122,15 @@ GRPO smoke→full 一路踩的环境坑(非方法问题,均已定位修复,SFT �
 2. 基座 Qwen3-8B 替 Qwen2.5-7B;
 3. max_length 4096 替 16K → **截断 16% FinQA**(6144 只截 2.6% 但 zero2 装不下,zero3 太慢);
 4. 无 CCC 子集(专有未发布);
-5. **FinQA 评测用 fin_verify 数值判分替 GPT-4o judge**(评测环节不引入 LLM 判分)→ FinQA 分不可与论文直接对标;
+5. **FinQA 评测用 fin_verify 数值判分,不用 LLM judge**(评测环节不引入 LLM 判分)→ 与采用 LLM judge 的实现不可直接对标;
 6. GRPO `num_generations` 可能 <8(显存,colocate/分离待定);
-7. GRPO 仅 CFLUE_MCQ(忠实论文)。
-> 忠实保留:两阶段 SFT→GRPO 逻辑、`<think></think><answer>\boxed{}</answer>` 格式、双奖励设计、DianJin 开源题目、先测 base 基线(论文亦然)。
+7. GRPO 奖励域仅 CFLUE_MCQ。
+> 保留的设计:两阶段 SFT→GRPO 逻辑、`<think></think><answer>\boxed{}</answer>` 格式、双奖励、先测 base 基线。
 
 ## 数据落地(已核验)
-- 题目源:ModelScope `tongyi_dianjin/DianJin-R1-Data`;文件名实为小写 `train/{cflue_mcq,cflue_oe,fin_qa}.json`。
-- **推理链(CoT)非取自上游,由本项目用 DeepSeek V4 Pro 重新蒸馏**——题目、数据量与蒸馏参数 1:1 照论文,
-  仅把教师模型从论文的 DeepSeek-R1 换成更新的模型。产物按上游同名结构落在 `data/DianJin-R1-Data/train/` 下,
-  故下文及 `args.json` 中的路径沿用该目录名。详见 [`DISTILLATION.md`](../DISTILLATION.md)。
+- 题目源:CFLUE 与 FinQA 的真实考题;落盘文件名为小写 `train/{cflue_mcq,cflue_oe,fin_qa}.json`。
+- **推理链(CoT)由本项目用 DeepSeek-V4-Pro-0813 蒸馏产出**,教师生成 → 双判据校验 → 最多 3 次重试,
+  失败样本降级为 non-reasoning。产物落在 `data/train/` 下。详见 [`DISTILLATION.md`](../DISTILLATION.md)。
 - 去污染:CFLUE test 重叠 0%;FinQA test 重叠 37 条(0.76%)已从训练剔除 → `fin_qa.decontam.json`(4814)。
 - 格式:think/answer 各 100% 恰好一个;boxed 命中 cflue_mcq/fin_qa 100%、cflue_oe 6%(开放题无 boxed,仅 SFT)。
 - S1 模板验证:Qwen3 默认模板 SFT 不产生双 think;仅误设 `enable_thinking=false` 才注入空 think → 全程严禁该参数。
@@ -157,6 +156,6 @@ GRPO smoke→full 一路踩的环境坑(非方法问题,均已定位修复,SFT �
 | GPQA(198) | 11.1 | 21.7 | 19.2 | −2.5 | eval/eval_gpqa_grpo.json |
 | 均值 | 37.9 | 47.6 | 47.5 | **−0.1** | |
 
-**结论(诚实负结果,GRPO 净效应≈0)**:根因 KL≈0(ref_adapters+β0.04 过度正则,策略未移动)→ 奖励域 CFLUE 只微涨 +0.8;跨任务零遗忘(FinQA +1.3、MATH ±0.0,对比论文 FinQA GRPO 后 −2.56);GPQA −2.5 为小基准噪声(≈5 题)。量级同论文(+1.6pp)、同族 track2 RFT/SC null:**强多任务 SFT 之上受限 RL 边际增益有限**。若求 GRPO 真涨需降 β/去 ref/扩奖励覆盖(未执行,留决策)。
+**结论(诚实负结果,GRPO 净效应≈0)**:根因 KL≈0(ref_adapters+β0.04 过度正则,策略未移动)→ 奖励域 CFLUE 只微涨 +0.8;跨任务零遗忘(FinQA +1.3、MATH ±0.0);GPQA −2.5 为小基准噪声(≈5 题)。量级与同族 RFT/SC 的 null 一致:**强多任务 SFT 之上受限 RL 边际增益有限**。若求 GRPO 真涨需降 β/去 ref/扩奖励覆盖(未执行,留决策)。
 
 **教训补记**:①GRPO 用 ref_adapters 锚 SFT 是"稳定性 vs 增益"的权衡——它护住非奖励任务不遗忘,代价是奖励任务也涨不动(KL 被压到 0);评估 GRPO 成败必须看 KL 是否真的移动了策略,而非只看训练 reward 曲线(reward 曲线是批次噪声,会误导)。②批次 acc(难例上、逐批不同题)≠ 评测 acc,严禁混为一谈对外汇报。
