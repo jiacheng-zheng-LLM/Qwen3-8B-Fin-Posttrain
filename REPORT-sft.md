@@ -24,7 +24,7 @@
 | **均值** | | **37.9%** | **47.6%** | **+9.7** |
 
 - 各项 Δ 超噪声;通用推理(MATH/GPQA)也涨(结构化推理数据泛化)。
-- SFT 交付 checkpoint:**checkpoint-1113**(另产出合并后的全量权重用于部署);。
+- SFT 交付 checkpoint:**checkpoint-1113**(另产出合并后的全量权重用于部署);超参见 `weights_archive/sft-lora-checkpoint-1113-FINAL/args.json`。
 
 ## 三、GRPO 方法学(设计已定稿,运行中)
 
@@ -53,7 +53,7 @@
 
 ### 3.5 config 与运行状态
 - LoRA r32/α64;num_generations **4**(8会OOM);max_completion **1536**(实测均长~250,不吃紧);lr1e-6;β0.04;1 epoch=1210步;
-- **实测**:全量 1210 步 ~5h,峰值~22.7GB/卡,无OOM;交付 checkpoint **checkpoint-1210**(adapter 174MB,续训 SFT 适配器,即 SFT+GRPO 合体权重);。
+- **实测**:全量 1210 步 ~5h,峰值~22.7GB/卡,无OOM;交付 checkpoint **checkpoint-1210**(adapter 174MB,续训 SFT 适配器,即 SFT+GRPO 合体权重);超参见 `weights_archive/grpo-lora-checkpoint-1210-FINAL/args.json`。
 
 ### 3.6 GRPO 最终评测(base→SFT→GRPO,同口径,已核实 artifact)
 
@@ -88,7 +88,7 @@ artifact:`eval/eval_{cflue,finqa,math500,gpqa}_grpo.json`。
 **核心教训**:①大词表LLM OOM优先liger而非缩序列;②放量smoke须含长度尾部;③GRPO分离部署在共享机器上远比SFT单进程脆(GPU抢占/代理/子进程泄漏/多进程清理自匹配);④全程只报有artifact的数字。
 
 ## 六、可复现资产
-- 数据管线/评测/难例筛选/reward:`scripts/{eval_dianjin,build_hardcase_rl}.py`、`plugin/fin_orm.py`;
+- 数据管线/评测/难例筛选/reward:`scripts/{eval_fin,build_hardcase_rl}.py`、`plugin/fin_orm.py`;
 - 训练脚本:SFT(liger+5120+DDP)、`scripts/grpo_full.sh`(proven 分离部署);
 - checkpoint:SFT `checkpoint-1113`(+合并版)、GRPO `checkpoint-1210`(已完成);
 - 评测 artifact:`eval/eval_{cflue,finqa,math500,gpqa}_{base,sft,grpo}.json`;

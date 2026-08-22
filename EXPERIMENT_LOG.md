@@ -51,7 +51,7 @@
 
 > **2026-08-22 更正**:本条原写作「定稿 max_length 4096 / 4096 为 liger 安全上限」,
 > 那是 4096 跑通、5120 还没试之前写下的,后续做了 5120 并采用,但本条没回改。
-> 实证依据:定稿 SFT 配置中 `max_length: 5120`;
+> 实证依据:`weights_archive/sft-lora-checkpoint-1113-FINAL/args.json` 中 `max_length: 5120`;
 > 原 `logs/liger_test_5120.log` 无 OutOfMemory、峰值 20.46GB;原 `logs/prefilter5120.log` 保留 97.4%
 > (4096 档为 95.2%)。文件头「全量 LoRA SFT v3」与 项目梳理记的 5120 是对的。
 - 教训:大词表 LLM 微调 OOM,优先 liger 融合 CE(Triton,低风险),而非死缩序列或上 zero3。liger 与极前沿 transformers 5.8 兼容(apply_liger_kernel_to_qwen3 生效)。

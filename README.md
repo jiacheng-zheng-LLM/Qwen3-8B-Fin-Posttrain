@@ -98,6 +98,7 @@ LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**）
   plugin/fin_orm.py         GRPO 双奖励插件（fin_acc + fin_format）
   eval/                     15 个评测结果 JSON（base / sft / grpo / gate 四档 + smoke）
   figures/                  16 张图表（中文 8 + en/ 英文 8）+ 逐图数据出处
+  weights_archive/          4 个 LoRA checkpoint 的完整超参、trainer_state、SHA256SUMS
   deploy/                   compose + Nginx 网关 + Prometheus + DEPLOY_LOG
   data/                     自建难例 RL 集
 
@@ -127,10 +128,12 @@ pip install -r requirements.txt
 | `SWIFT_BIN` · `CONDA_INIT` · `CONDA_ENV` · `RUN_DIR` | swift 可执行文件、conda 激活、运行产物落盘目录 | 可选 |
 
 1. **准备上游依赖** —— 见 [DATA.md](DATA.md)。SFT 推理链需按 [DISTILLATION.md](DISTILLATION.md) 自行蒸馏。
-2. **SFT** —— LoRA r32/α64 all-linear，lr 1e-4，3 epoch，max_length 5120 + liger 融合 CE，DDP/ZeRO-2。
+2. **SFT** —— LoRA r32/α64 all-linear，lr 1e-4，3 epoch，max_length 5120 + liger 融合 CE，DDP/ZeRO-2；
+   完整超参见 `weights_archive/sft-lora-checkpoint-1113-FINAL/args.json`。
 3. **难例筛选** —— `scripts/build_hardcase_rl.py`：k=4 采样，只留 `0 < c/k < 1`。
 4. **GRPO** —— `scripts/grpo_full.sh`，奖励插件 `plugin/fin_orm.py`；
-   lr 1e-6，β=0.04，num_generations 4，max_completion_length 1536，1 epoch = 1210 步。
+   lr 1e-6，β=0.04，num_generations 4，max_completion_length 1536，1 epoch = 1210 步；
+   完整超参见 `weights_archive/grpo-lora-checkpoint-1210-FINAL/args.json`。
 5. **评测** —— `scripts/eval_fin.py` + `scripts/run_all_eval.sh`。
 6. **部署** —— `deploy/README.md`：合并 → `deploy_gate.sh` 门禁 →
    compose 起 3 副本 + 网关 + Prometheus。
