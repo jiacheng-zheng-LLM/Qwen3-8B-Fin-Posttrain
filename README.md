@@ -1,4 +1,4 @@
-# qwen3-fin-posttrain
+# Qwen3-8B-Fin-Posttrain
 
 **Two-stage post-training (LoRA SFT → GRPO) of Qwen3-8B for financial reasoning, on 6×RTX4090 (24 GB, no NVLink).**
 Includes the full experiment log, every evaluation artifact, and a documented **null result** for the RL stage.
