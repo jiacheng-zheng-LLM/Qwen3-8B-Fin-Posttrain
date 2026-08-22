@@ -11,8 +11,8 @@ Includes the full experiment log, every evaluation artifact, and a fully documen
 一个无法审计推理链条的答案在业务上不可用。业界对此的解法是**两阶段后训练**——先用带推理链的数据
 做监督微调让模型学会"先想后答"，再用可验证的规则奖励做强化学习把正确率顶上去。
 
-**实现。** 本项目在 **6×RTX4090** 上以 **SFT 中的 LoRA 进行监督微调**，
-**GRPO 阶段同样用 LoRA 续训**；基座 **Qwen3-8B**，框架 **[ms-swift](https://github.com/modelscope/ms-swift)**。训练数据的题干为 CFLUE 与 FinQA 的真实金融考题
+**实现。** 本项目在 **6×RTX4090** 上用 LoRA 完成**监督微调（SFT）→ GRPO 续训**两阶段；
+基座 **[Qwen3-8B](https://huggingface.co/Qwen/Qwen3-8B)**，框架 **[ms-swift](https://github.com/modelscope/ms-swift)**。训练数据的题干为 CFLUE 与 FinQA 的真实金融考题
 （共 36 568 条），**推理链由本项目用 DeepSeek-V4-Pro-0813 重新蒸馏**。难例筛选改用**客观判据**：
 以 SFT 模型自身采样通过率 `c/k ∈ (0,1)` 为唯一条件。用 liger kernel 融合交叉熵化解 152k 大词表
 LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**），并行策略采用 DDP + ZeRO-2。

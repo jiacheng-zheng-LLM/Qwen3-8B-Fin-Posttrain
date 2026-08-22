@@ -26,7 +26,8 @@ SFT 数据由两部分组成，来源不同，须分开看：
 | **Qwen3-8B** | 基座模型 | 16 G | HF [`Qwen/Qwen3-8B`](https://huggingface.co/Qwen/Qwen3-8B) | Apache-2.0 |
 | **CFLUE** | 中文金融题源 + 评测集 | — | [aliyun/cflue](https://github.com/aliyun/cflue) | 遵守其原始条款 |
 | **FinQA** | 英文数值题源 + 评测集 | — | HF [`dreamerdeo/finqa`](https://huggingface.co/datasets/dreamerdeo/finqa) | HF 匿名可读 |
-| **MATH-500 / GPQA-diamond** | 通用能力评测集 | 8.8 M | HF 公开 | 各自原始许可 |
+| **MATH-500** | 通用数学评测集（500 题） | — | HF [`HuggingFaceH4/MATH-500`](https://huggingface.co/datasets/HuggingFaceH4/MATH-500) | 原始许可 |
+| **GPQA-diamond** | 通用科学评测集（198 题） | — | HF [`Idavidrein/gpqa`](https://huggingface.co/datasets/Idavidrein/gpqa)，取 `gpqa_diamond` 子集 | **gated**，需在 HF 上先同意条款 |
 
 推理链需按 [DISTILLATION.md](DISTILLATION.md) 自行蒸馏——原始蒸馏脚本已遗失，
 仓库内提供复原的参考实现 `scripts/distill_cot.py`。
