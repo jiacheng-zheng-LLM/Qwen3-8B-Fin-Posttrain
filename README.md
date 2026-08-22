@@ -93,7 +93,7 @@ LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**）
             SFT → 难例筛选 → GRPO → 评测 → 部署
   EXPERIMENT_LOG.md         全程实验/事故日志（每次失败的现象-归因-修复）
   REPORT-sft.md             SFT 阶段三方对比交付报告
-  scripts/                  数据构建、训练编排、评测、部署门禁与压测
+  scripts/                  数据构建、训练（sft.sh / grpo_full.sh）、评测、部署门禁与压测
     distill_cot.py          推理链蒸馏（复原的参考实现）
   plugin/fin_orm.py         GRPO 双奖励插件（fin_acc + fin_format）
   eval/                     15 个评测结果 JSON（base / sft / grpo / gate 四档 + smoke）
@@ -128,7 +128,8 @@ pip install -r requirements.txt
 | `SWIFT_BIN` · `CONDA_INIT` · `CONDA_ENV` · `RUN_DIR` | swift 可执行文件、conda 激活、运行产物落盘目录 | 可选 |
 
 1. **准备上游依赖** —— 见 [DATA.md](DATA.md)。SFT 推理链需按 [DISTILLATION.md](DISTILLATION.md) 自行蒸馏。
-2. **SFT** —— LoRA r32/α64 all-linear，lr 1e-4，3 epoch，max_length 5120 + liger 融合 CE，DDP/ZeRO-2；
+2. **SFT** —— `scripts/sft.sh`：LoRA r32/α64 all-linear，lr 1e-4，3 epoch，
+   max_length 5120 + liger 融合 CE，DDP/ZeRO-2；
    完整超参见 `weights_archive/sft-lora-checkpoint-1113-FINAL/args.json`。
 3. **难例筛选** —— `scripts/build_hardcase_rl.py`：k=4 采样，只留 `0 < c/k < 1`。
 4. **GRPO** —— `scripts/grpo_full.sh`，奖励插件 `plugin/fin_orm.py`；
