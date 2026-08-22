@@ -13,7 +13,7 @@ Includes the full experiment log, every evaluation artifact, and a fully documen
 
 **实现。** 本项目在 **6×RTX4090** 上用 LoRA 完成**监督微调（SFT）→ GRPO 续训**两阶段；
 基座 **[Qwen3-8B](https://huggingface.co/Qwen/Qwen3-8B)**，框架 **[ms-swift](https://github.com/modelscope/ms-swift)**。训练数据的题干为 CFLUE 与 FinQA 的真实金融考题
-（共 36 568 条），**推理链由本项目用 DeepSeek-V4-Pro-0813 重新蒸馏**。难例筛选改用**客观判据**：
+（共 36 568 条），**推理链由本项目用 DeepSeek-V4-Pro-0813 重新蒸馏**。难例筛选使用**客观判据**：
 以 SFT 模型自身采样通过率 `c/k ∈ (0,1)` 为唯一条件。用 liger kernel 融合交叉熵化解 152k 大词表
 LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**），并行策略采用 DDP + ZeRO-2。
 产出模型经质量门禁后以 3 副本 vLLM + Nginx 网关 + Prometheus 上线。
@@ -87,21 +87,36 @@ LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**）
 
 ## 仓库结构
 
-```
-            SFT → 难例筛选 → GRPO → 评测 → 部署
-  EXPERIMENT_LOG.md         全程实验/事故日志（每次失败的现象-归因-修复）
-  REPORT-sft.md             SFT 阶段三方对比交付报告
-  scripts/                  数据构建、训练（sft.sh / grpo_full.sh）、评测、部署门禁与压测
-    distill_cot.py          推理链蒸馏（复原的参考实现）
-  plugin/fin_orm.py         GRPO 双奖励插件（fin_acc + fin_format）
-  eval/                     15 个评测结果 JSON（base / sft / grpo / gate 四档 + smoke）
-  figures/                  16 张图表（中文 8 + en/ 英文 8）+ 逐图数据出处
-  weights_archive/          4 个 LoRA checkpoint 的完整超参、trainer_state、SHA256SUMS
-  deploy/                   compose + Nginx 网关 + Prometheus 配置
-  data/                     自建难例 RL 集
+流程：**推理链蒸馏 → SFT → 难例筛选 → GRPO → 评测 → 部署**
 
-DATA.md                     上游数据去哪取、什么许可、仓库里保留了什么
-DISTILLATION.md             SFT 推理链的蒸馏方法、教师模型与参数
+```
+README.md                 本文件
+DATA.md                   数据构成、上游资源去哪取、什么许可
+DISTILLATION.md           推理链的蒸馏流程、教师模型与采样参数
+EXPERIMENT_LOG.md         全程实验/事故日志（每次失败的现象-归因-修复）
+REPORT-sft.md             SFT 阶段三方对比交付报告
+requirements.txt          锁定版本的依赖
+LICENSE                   Apache-2.0
+
+scripts/                  11 个脚本
+  distill_cot.py            推理链蒸馏（复原的参考实现）
+  sft.sh                    阶段一：LoRA 监督微调
+  build_hardcase_rl.py      难例筛选：k=4 采样，只留 0 < c/k < 1
+  grpo_full.sh              阶段二：GRPO（rollout 与训练器分离部署）
+  grpo_smoke.sh             GRPO 冒烟（200 条小样本，先验证链路）
+  eval_fin.py               统一评测：CFLUE / FinQA / MATH-500 / GPQA
+  run_all_eval.sh           base + SFT 全基准批量评测
+  run_grpo_eval.sh          GRPO 全基准批量评测
+  deploy_gate.sh            上线质量门禁：合并模型须复现 checkpoint 分数
+  deploy_loadtest.py        并发压测（24/48/96）
+  deploy_smoke_client.py    部署冒烟客户端
+
+plugin/fin_orm.py         GRPO 双奖励插件（fin_acc + fin_format）
+eval/                     15 个评测结果 JSON（base / sft / grpo / gate + smoke）
+figures/                  16 张图表（中文 8 + en/ 英文 8）+ 逐图数据出处
+weights_archive/          4 个 LoRA checkpoint 的完整超参、trainer_state、SHA256SUMS
+deploy/                   docker-compose ×2 + Nginx 网关 + Prometheus 配置
+data/                     自建难例 RL 集（2421 条 + 200 条冒烟子集）
 ```
 
 ---
