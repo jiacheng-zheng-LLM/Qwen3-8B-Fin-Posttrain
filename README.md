@@ -11,14 +11,13 @@ Includes the full experiment log, every evaluation artifact, and a documented **
 一个无法审计推理链条的答案在业务上不可用。业界对此的解法是**两阶段后训练**——先用带推理链的数据
 做监督微调让模型学会"先想后答"，再用可验证的规则奖励做强化学习把正确率顶上去。
 
-**实现。** 本项目在 **6×RTX4090（24 GB，无 NVLink，共享机器）** 上以**纯 LoRA** 独立复现该范式，
+**实现。** 本项目在 **6×RTX4090** 上以**纯 LoRA** 独立复现该范式，
 基座 **Qwen3-8B**，框架 **ms-swift**。训练数据的题干为 CFLUE 与 FinQA 的真实金融考题
 （题集划分与规模照 DianJin-R1（[arXiv:2504.15716](https://arxiv.org/abs/2504.15716)）论文 Table 1，
 共 36 568 条），**推理链由本项目用 DeepSeek-V4-Pro-0813 重新蒸馏**。难例筛选改用**客观判据**：
 以 SFT 模型自身采样通过率 `c/k ∈ (0,1)` 为唯一条件。用 liger kernel 融合交叉熵化解 152k 大词表
-LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**）、实测无 NVLink 环境
-all-gather 慢约 30× 后弃用 ZeRO-3 改 DDP + ZeRO-2。产出模型经质量门禁后以
-3 副本 vLLM + Nginx 网关 + Prometheus 上线。
+LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**），并行策略采用 DDP + ZeRO-2。
+产出模型经质量门禁后以 3 副本 vLLM + Nginx 网关 + Prometheus 上线。
 
 **结果。** SFT 在中英金融与通用推理四个基准上同口径评测**全部提升，均值 +9.66 pp**，
 且通用数学与科学能力未退化反升。**GRPO 净效应约等于零**（均值 47.58 → 47.48）——
@@ -58,15 +57,6 @@ all-gather 慢约 30× 后弃用 ZeRO-3 改 DDP + ZeRO-2。产出模型经质量
 **SFT 收敛**：loss 1.069 → 0.692，图中标出 3 个 epoch 边界。
 
 ![SFT loss](phase1-sft-grpo/figures/fig2_sft_loss.png)
-
-**GRPO 为什么没涨**：上图 reward 首/末 100 步 `0.721 → 0.721` 完全持平；
-下图平均 **41.6%** 的采样组奖励全同 → 组内优势恒为 0 → 该批次无梯度。
-
-![GRPO reward](phase1-sft-grpo/figures/fig3_grpo_reward.png)
-
-**零效应的直接证据**：KL 中位数 `8.4e-4`、全程最大 `7.2e-3`（β=0.04），策略几乎没动过。
-
-![GRPO KL](phase1-sft-grpo/figures/fig4_grpo_kl.png)
 
 **客观难例筛选器**：8000 题中全对 58.8% / 混合 **30.3%** / 全错 11.0%——
 随机抽题会把近 7 成算力打在零梯度样本上。
