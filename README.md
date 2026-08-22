@@ -1,6 +1,6 @@
 # Qwen3-8B-Fin-Posttrain
 
-**Two-stage post-training (LoRA SFT → GRPO) of Qwen3-8B for financial reasoning, on 6×RTX4090 (24 GB, no NVLink).**
+**Two-stage post-training (LoRA SFT → GRPO) of Qwen3-8B for financial reasoning, on 6×RTX4090.**
 Includes the full experiment log, every evaluation artifact, and a documented **null result** for the RL stage.
 
 ---
@@ -20,9 +20,8 @@ LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**）
 产出模型经质量门禁后以 3 副本 vLLM + Nginx 网关 + Prometheus 上线。
 
 **结果。** SFT 在中英金融与通用推理四个基准上同口径评测**全部提升，均值 +9.66 pp**，
-且通用数学与科学能力未退化反升。**GRPO 净效应约等于零**（均值 47.58 → 47.48）——
-根因定位到 `--ref_adapters` 把参考模型锚在 SFT 检查点上，导致 **KL 全程 ≈ 0（中位数 8.4e-4）、
-策略几乎没有离开起点**；同时 41.6% 的采样组内奖励全同，组内优势恒为 0、该批次无梯度。
+且通用数学与科学能力未退化反升。**GRPO 净效应约等于零**（均值 47.58 → 47.48），
+根因定位到 `--ref_adapters` 把参考模型锚在 SFT 检查点上造成的过度正则。
 这个负结果，连同全过程的"现象 → 归因 → 修复"事故日志与全部评测 artifact，一并公开在本仓库。
 
 ---
@@ -42,9 +41,6 @@ LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**）
 | **均值** | — | **37.92** | **47.58** | **47.48** | **−0.10** |
 
 **SFT 四基准全涨，均值 +9.66 pp**，且通用能力（MATH / GPQA）未退化反升。
-
-**GRPO 净效应 ≈ 0。** 四个基准的 Δ 没有一个能与 0 区分开——以 GPQA 的 −2.53 pp 为例，
-它等于 198 题里少答对 5 题（约 0.62σ），且两侧准确率都低于 4 选 1 随机线，不承载能力信号。
 
 ---
 
