@@ -2,7 +2,7 @@
 
 > 在 **ms-swift** 框架下对 **Qwen3-8B** 做 **LoRA SFT → LoRA GRPO** 两阶段后训练。
 > 硬件:6×RTX4090。数据:题目为 CFLUE 与 FinQA 的真实金融考题,
-> **推理链由本项目用 DeepSeek-V4-Pro-0813 蒸馏产出**,
+> **推理链由本项目用 DeepSeek-R1 蒸馏产出**,
 > 详见 [`DISTILLATION.md`](DISTILLATION.md)。**判分与难例筛选环节不调用任何外部大模型**
 > (FinQA 用 `fin_verify` 数值判分替 GPT-4o judge;难例用客观 `c/k` 筛选器替 R1+GPT-4o 判难)。
 > 状态:**SFT + GRPO 全流程已完成并评测(base→SFT→GRPO 三方同口径)。**

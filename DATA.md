@@ -12,7 +12,7 @@ SFT 数据由两部分组成，来源不同，须分开看：
 | 组成 | 来源 | 许可 |
 |---|---|---|
 | **题干 / 选项 / 标准答案** | 真实金融考题（CFLUE 中文金融题库、FinQA 英文数值推理） | 遵守各自原始条款，见 §2 |
-| **推理链（CoT）** | **本项目用 DeepSeek-V4-Pro-0813 蒸馏产出** | 属教师模型输出，见 [DISTILLATION.md](DISTILLATION.md) |
+| **推理链（CoT）** | **本项目用 DeepSeek-R1 蒸馏产出** | 属教师模型输出，见 [DISTILLATION.md](DISTILLATION.md) |
 
 题集规模：CFLUE MCQ 26 672 / CFLUE 开放题 5 045 / FinQA 4 851，合计 **36 568** 条。
 造数据的完整流程、采样参数与校验方式见 [DISTILLATION.md](DISTILLATION.md)。

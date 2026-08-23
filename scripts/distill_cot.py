@@ -5,7 +5,7 @@
 ⚠️ 这是**复原件**，不是产出本项目 SFT 数据的原始脚本（原始脚本已遗失）。
    它按 DISTILLATION.md 记录的流程重写，供他人复现使用。用它重跑**不保证**
    得到与本项目完全相同的数据：校验 prompt 的原始措辞已无从考证，且
-   temperature=1.0 下教师模型本身带采样随机性。
+   temperature=0.6 下教师模型本身带采样随机性。
 
 流程（见 DISTILLATION.md §2）：
   1. 教师模型对每道题生成 <think> 推理 + <answer> 含 \\boxed{} 的答案；
@@ -16,9 +16,9 @@
   export TEACHER_BASE_URL=https://api.deepseek.com/v1
   export TEACHER_API_KEY=...
   export TEACHER_MODEL=deepseek-v4-pro
-  # 教师采样参数:V4-Pro-0813 官方推荐(非 agentic 场景)
-  export GEN_TEMPERATURE=1.0
-  export GEN_TOP_P=1.0
+  # 教师采样参数:DeepSeek-R1 官方推荐
+  export GEN_TEMPERATURE=0.6
+  export GEN_TOP_P=0.95
   export VERIFIER_BASE_URL=https://api.openai.com/v1
   export VERIFIER_API_KEY=...
   export VERIFIER_MODEL=gpt-4o
@@ -222,8 +222,8 @@ def run(args):
                    ("max_tokens", "GEN_MAX_TOKENS")):
         if os.environ.get(env):
             gen_kwargs[k] = float(os.environ[env]) if k != "max_tokens" else int(os.environ[env])
-    _shown = gen_kwargs or ("(全部走服务端默认;V4-Pro-0813 官方推荐为 "
-                            "temperature=1.0 / top_p=1.0,非 agentic 场景)")
+    _shown = gen_kwargs or ("(全部走服务端默认;DeepSeek-R1 官方推荐为 "
+                            "temperature=0.6 / top_p=0.95)")
     print(f"[gen kwargs] {_shown}")
 
     rows = json.load(open(args.inp, encoding="utf-8"))

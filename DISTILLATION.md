@@ -3,7 +3,7 @@
 SFT 训练数据由两部分组成，来源不同：
 
 - **题干、选项与标准答案** —— 第三方真实金融考题，本项目未做改动
-- **推理链（CoT）** —— 由本项目用 **DeepSeek-V4-Pro-0813** 蒸馏产出
+- **推理链（CoT）** —— 由本项目用 **DeepSeek-R1** 蒸馏产出
 
 本文说明这份数据是怎么造出来的。
 
@@ -39,7 +39,7 @@ non-reasoning 样本**（只保留题干与标答，不带推理链）。
 
 | 项 | 值 |
 |---|---|
-| 生成推理链的教师 | **DeepSeek-V4-Pro-0813**（正式版，2026-08-13 发布） |
+| 生成推理链的教师 | **DeepSeek-R1** |
 | 一致性校验模型 | **GPT-4o** |
 | 每题最多尝试次数 | **3** |
 | 失败样本处理 | 降级为 non-reasoning 样本 |
@@ -51,19 +51,22 @@ non-reasoning 样本**（只保留题干与标答，不带推理链）。
 
 ## 3. 采样参数
 
-采用**教师模型 DeepSeek-V4-Pro-0813 的官方推荐值**：
+采用**教师模型 DeepSeek-R1 的官方推荐值**：
 
 | 项 | 值 | 出处 |
 |---|---|---|
-| **temperature** | **1.0** | 官方模型卡：「sampling parameters to `temperature = 1.0`」 |
-| **top_p** | **1.0** | 官方模型卡：「`top_p = 0.95` for agentic scenarios and **`top_p = 1.0` otherwise**」——推理链蒸馏属非 agentic 场景，取 1.0 |
-| **max output length** | **384K tokens** | 官方模型卡：「For the `high` and `max` reasoning effort levels, we recommend a maximum output length of **384K** tokens」 |
-| `reasoning_effort` | `low` / `high` / `max` 三档 | 官方参数，控制作答前的思考量。上面 384K 的建议**仅适用于 `high` 与 `max` 两档**；若用 `low`，官方未给出对应的输出长度建议 |
+| **temperature** | **0.6** | 官方模型卡：「Set the temperature within the range of 0.5-0.7 (0.6 is recommended)」 |
+| **top_p** | **0.95** | 官方模型卡的基准评测设置 |
+| **max generation length** | **32 768 tokens** | 同上 |
+| system prompt | **不加** | 官方模型卡：「Avoid adding a system prompt; all instructions should be contained within the user prompt」 |
+| 起始标记 | 强制以 `<think>\n` 开头 | 官方建议，避免模型跳过推理段直接作答 |
 
-来源：[DeepSeek-V4-Pro-0813 官方模型卡](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813)。
+来源：[DeepSeek-R1 官方模型卡](https://huggingface.co/deepseek-ai/DeepSeek-R1)。
 
-> **别把 temperature 往下调。** V4 系列的公开指引提到，调低温度可能压垮推理链、
-> 反而降低答案质量；需要控制输出长度应该用 `max_tokens`，而不是降温。
+> 官方特别提示：temperature 低于 0.5 容易触发重复或不连贯输出，高于 0.7 则推理稳定性下降，
+> 0.6 是推荐落点。数学类题目建议在 user prompt 内直接写明
+> 「Please reason step by step, and put your final answer within `\boxed{}`」——
+> 本项目的生成 prompt 正是这么写的（见 `scripts/distill_cot.py`）。
 
 ---
 

@@ -13,7 +13,7 @@ Includes the full experiment log, every evaluation artifact, and a fully documen
 
 **实现。** 本项目在 **6×RTX4090** 上用 LoRA 完成**监督微调（SFT）→ GRPO 续训**两阶段；
 基座 **[Qwen3-8B](https://huggingface.co/Qwen/Qwen3-8B)**，框架 **[ms-swift](https://github.com/modelscope/ms-swift)**。训练数据的题干为 CFLUE 与 FinQA 的真实金融考题
-（共 36 568 条），**推理链由本项目用 DeepSeek-V4-Pro-0813 重新蒸馏**。难例筛选使用**客观判据**：
+（共 36 568 条），**推理链由本项目用 DeepSeek-R1 重新蒸馏**。难例筛选使用**客观判据**：
 以 SFT 模型自身采样通过率 `c/k ∈ (0,1)` 为唯一条件。用 liger kernel 融合交叉熵化解 152k 大词表
 LM 头的 logits 显存峰值（`max_length` 5120，数据保留率 **97.4%**），并行策略采用 DDP + ZeRO-2。
 产出模型经质量门禁后以 3 副本 vLLM + Nginx 网关 + Prometheus 上线。
