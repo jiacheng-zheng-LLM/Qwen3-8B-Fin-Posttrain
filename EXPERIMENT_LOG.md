@@ -150,12 +150,12 @@ GRPO smoke→full 一路踩的环境坑(非方法问题,均已定位修复,SFT �
 
 | 基准 | base | SFT | GRPO | GRPOΔ(vs SFT) | artifact |
 |---|---|---|---|---|---|
-| CFLUE(800) | 48.0 | 53.9 | 54.8 | +0.8 | eval/eval_cflue_grpo.json |
+| CFLUE(800) | 48.0 | 53.9 | 54.8 | +0.9 | eval/eval_cflue_grpo.json |
 | FinQA(1127) | 52.2 | 60.5 | 61.8 | +1.3 | eval/eval_finqa_grpo.json |
 | MATH-500(500) | 40.4 | 54.2 | 54.2 | ±0.0 | eval/eval_math500_grpo.json |
 | GPQA(198) | 11.1 | 21.7 | 19.2 | −2.5 | eval/eval_gpqa_grpo.json |
 | 均值 | 37.9 | 47.6 | 47.5 | **−0.1** | |
 
-**结论(诚实负结果,GRPO 净效应≈0)**:根因 KL≈0(ref_adapters+β0.04 过度正则,策略未移动)→ 奖励域 CFLUE 只微涨 +0.8;跨任务零遗忘(FinQA +1.3、MATH ±0.0);GPQA −2.5 为小基准噪声(≈5 题)。量级与同族 RFT/SC 的 null 一致:**强多任务 SFT 之上受限 RL 边际增益有限**。若求 GRPO 真涨需降 β/去 ref/扩奖励覆盖(未执行,留决策)。
+**结论(诚实负结果,GRPO 净效应≈0)**:根因 KL≈0(ref_adapters+β0.04 过度正则,策略未移动)→ 奖励域 CFLUE 只微涨 +0.9(438/800 vs 431/800 = +0.88pp,即多做对 7 题);跨任务零遗忘(FinQA +1.3、MATH ±0.0);GPQA −2.5 为小基准噪声(≈5 题)。量级与同族 RFT/SC 的 null 一致:**强多任务 SFT 之上受限 RL 边际增益有限**。若求 GRPO 真涨需降 β/去 ref/扩奖励覆盖(未执行,留决策)。
 
 **教训补记**:①GRPO 用 ref_adapters 锚 SFT 是"稳定性 vs 增益"的权衡——它护住非奖励任务不遗忘,代价是奖励任务也涨不动(KL 被压到 0);评估 GRPO 成败必须看 KL 是否真的移动了策略,而非只看训练 reward 曲线(reward 曲线是批次噪声,会误导)。②批次 acc(难例上、逐批不同题)≠ 评测 acc,严禁混为一谈对外汇报。
