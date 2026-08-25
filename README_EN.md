@@ -19,31 +19,21 @@ Full experiment log · every evaluation artifact · a documented negative result
 
 ## Overview
 
-**Background.** A general-purpose LLM applied to finance does not fail at arithmetic — it fails by
-giving a conclusion without the reasoning behind it. Finance is a compliance-heavy domain, and an
-answer whose chain of reasoning cannot be audited is unusable in production. The established remedy
-is **two-stage post-training**: first supervised fine-tuning on data that carries explicit reasoning
-chains, teaching the model to think before it answers; then reinforcement learning against a
-verifiable rule-based reward to push accuracy up.
+A general-purpose LLM applied to finance does not fail at arithmetic — it fails by giving a conclusion without the reasoning behind it. Finance is a compliance-heavy domain, and an answer whose chain of reasoning cannot be audited is unusable in production. The established remedy is two-stage post-training: first supervised fine-tuning on data carrying explicit reasoning chains, so the model learns to think before it answers; then reinforcement learning against a verifiable rule-based reward to push accuracy up. This project walks that path end to end on 6×RTX4090 and publishes the RL stage's negative result in full.
 
-**Approach.** This project runs both stages with LoRA on **6×RTX4090** — **supervised fine-tuning
-(SFT) → GRPO continuation** — on top of **[Qwen3-8B](https://huggingface.co/Qwen/Qwen3-8B)** using
-**[ms-swift](https://github.com/modelscope/ms-swift)**. The questions are real financial exam items
-from CFLUE and FinQA (36,568 in total); the **reasoning chains were distilled in-house with
-DeepSeek-R1**. Hard-case selection uses an **objective criterion**: an item is kept only if the SFT
-model's own sampling pass rate satisfies `c/k ∈ (0,1)`. A liger-kernel fused cross-entropy removes
-the logits memory spike from the 152k-token vocabulary LM head (`max_length` 5120, **97.4%** of the
-data retained); the final configuration is plain DDP. The resulting model passes a quality gate and
-is served as 3 vLLM replicas behind an Nginx gateway with Prometheus monitoring.
+#### Key design decisions
 
-**Results.** SFT **improves all four benchmarks**, **+9.66 pp on average**, with general math and
-science ability holding up rather than degrading. **GRPO's net effect is approximately zero**
-(mean 47.58 → 47.48). The root cause is traced to `--ref_adapters` anchoring the reference model at
-the SFT checkpoint: **KL stays ≈ 0 throughout (median 8.4e-4) and the policy barely leaves its
-starting point**, while 41.6% of sampling groups return identical rewards, making the in-group
-advantage exactly zero and the batch gradient-free. That negative result is published here in full,
-together with the incident log — symptom → root cause → fix for every failure — and every
-evaluation artifact.
+- **Base and framework** — [Qwen3-8B](https://huggingface.co/Qwen/Qwen3-8B) + [ms-swift](https://github.com/modelscope/ms-swift); both SFT and GRPO run with LoRA
+- **Training data** — 36,568 real financial exam items from CFLUE and FinQA; reasoning chains distilled in-house with DeepSeek-R1
+- **Hard-case selection** — an item is kept only if the SFT model's own sampling pass rate satisfies `c/k ∈ (0,1)`; no LLM judges difficulty
+- **Memory bottleneck** — a liger-kernel fused cross-entropy removes the logits spike from the 152k-token vocabulary LM head, lifting `max_length` to 5120 and retaining 97.4% of the data; the final configuration is plain DDP
+- **Deployment** — after a quality gate, 3 vLLM replicas behind an Nginx gateway with Prometheus
+
+#### Findings
+
+SFT improves all four benchmarks, **+9.66 pp** on average, with general math and science ability holding up rather than degrading.
+
+GRPO's net effect is approximately zero (47.58 → 47.48). The root cause is `--ref_adapters` anchoring the reference model at the SFT checkpoint: KL stays ≈ 0 throughout (median 8.4e-4) and the policy barely leaves its starting point, while 41.6% of sampling groups return identical rewards, making the in-group advantage exactly zero and the batch gradient-free. That negative result is published here together with the full incident log — symptom, root cause, fix — and every evaluation artifact.
 
 ---
 

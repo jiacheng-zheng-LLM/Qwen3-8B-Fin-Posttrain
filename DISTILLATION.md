@@ -18,17 +18,13 @@ SFT 训练数据由两部分组成，来源不同：
 | FinQA | 4 851 | 英文数值推理（含财报表格） |
 | **合计** | **36 568** | |
 
-题目来自 CFLUE（[aliyun/cflue](https://github.com/aliyun/cflue)）与 FinQA
-（[dreamerdeo/finqa](https://huggingface.co/datasets/dreamerdeo/finqa)）的真实考题，
-使用时须遵守各自的原始条款。
+题目来自 CFLUE（[aliyun/cflue](https://github.com/aliyun/cflue)）与 FinQA（[dreamerdeo/finqa](https://huggingface.co/datasets/dreamerdeo/finqa)）的真实考题，使用时须遵守各自的原始条款。
 
 ---
 
 ## 2. 蒸馏流程
 
-对每道题，让教师模型生成 `<think>` 推理段 + `<answer>` 答案段（答案放在 `\boxed{}` 内），
-然后过两道校验；任一不通过就重采，**最多尝试 3 次**；三次都不通过的题**降级为
-non-reasoning 样本**（只保留题干与标答，不带推理链）。
+对每道题，让教师模型生成 `<think>` 推理段 + `<answer>` 答案段（答案放在 `\boxed{}` 内），然后过两道校验；任一不通过就重采，**最多尝试 3 次**；三次都不通过的题**降级为non-reasoning 样本**（只保留题干与标答，不带推理链）。
 
 两道校验判据：
 
