@@ -19,11 +19,11 @@ Full experiment log · every evaluation artifact · a documented negative result
 
 ## Overview
 
-Finance is a compliance-heavy domain: an answer that cannot show its reasoning is unusable in production. This project post-trains Qwen3-8B on **6×RTX4090** into a model that reasons before it answers — SFT lifts all four benchmarks, **+9.66 pp** on average; the GRPO stage that follows adds essentially nothing.
+Finance is a compliance-heavy domain: an answer that cannot show its reasoning is unusable in production. This project post-trains Qwen3-8B on **6×RTX4090** into a model that reasons before it answers.
 
-The second half is the part worth reading. That RL produced no gain traces to a single flag: `--ref_adapters` pinned the reference model to the SFT checkpoint, KL stayed ≈ 0 for the entire run, and the policy never meaningfully left where it started — and a policy that does not move leaves no reward design any room to act. The negative result is published in full, alongside a symptom → root cause → fix log that includes three entries where a later re-check found the original note wrong and corrected it in place rather than deleting it.
+SFT lifts all four benchmarks, **+9.66 pp** on average, with general math and science ability holding up. The GRPO stage that follows adds essentially nothing: `--ref_adapters` pinned the reference model to the SFT checkpoint, KL stayed ≈ 0 for the entire run, and the policy never meaningfully left where it started — a policy that does not move leaves no reward design any room to act.
 
-Every claim in this repository traces back to an evaluation artifact stored here.
+Failures, root causes and fixes are recorded in [EXPERIMENT_LOG.md](EXPERIMENT_LOG.md) (including three entries corrected after a later re-check); the raw benchmark results are in [eval/](eval/).
 
 #### Key design decisions
 
