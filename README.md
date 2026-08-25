@@ -44,7 +44,7 @@ GRPO 净效应约等于零（47.58 → 47.48）。根因定位到 `--ref_adapter
 | GPQA-diamond（通用科学） | 198 | 11.11 | 21.72 | **19.19** | −2.53 |
 | **均值** | — | **37.92** | **47.58** | **47.48** | **−0.10** |
 
-<img src="figures/fig1_benchmark_comparison.png" width="760" alt="四基准同口径评测">
+<img src="figures/en/fig1_benchmark_comparison.png" width="760" alt="四基准同口径评测">
 
 **SFT 四基准全涨，均值 +9.66 pp**，通用能力（MATH / GPQA）未退化反升。
 
