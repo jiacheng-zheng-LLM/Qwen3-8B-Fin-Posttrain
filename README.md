@@ -4,7 +4,10 @@
 
 **金融推理两阶段后训练 · LoRA SFT → GRPO**
 
-[![License](https://img.shields.io/badge/License-Apache--2.0-4c6ef5?style=flat-square)](LICENSE)[![Base](https://img.shields.io/badge/Base-Qwen3--8B-495057?style=flat-square)](https://huggingface.co/Qwen/Qwen3-8B)[![Framework](https://img.shields.io/badge/Framework-ms--swift%204.4.2-495057?style=flat-square)](https://github.com/modelscope/ms-swift)[![Hardware](https://img.shields.io/badge/Hardware-6%C3%97RTX4090-495057?style=flat-square)](#复现)
+[![License](https://img.shields.io/badge/License-Apache--2.0-4c6ef5?style=flat-square&logo=apache&logoColor=white)](LICENSE)
+[![Base](https://img.shields.io/badge/Base-Qwen3--8B-7048e8?style=flat-square&logo=huggingface&logoColor=white)](https://huggingface.co/Qwen/Qwen3-8B)
+[![Framework](https://img.shields.io/badge/Framework-ms--swift%204.4.2-1098ad?style=flat-square&logo=alibabacloud&logoColor=white)](https://github.com/modelscope/ms-swift)
+[![Hardware](https://img.shields.io/badge/Hardware-6%C3%97RTX4090-76b900?style=flat-square&logo=nvidia&logoColor=white)](#复现)
 
 完整实验日志 · 全部评测 artifact · RL 阶段负结果归因
 

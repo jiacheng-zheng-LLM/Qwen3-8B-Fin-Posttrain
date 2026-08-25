@@ -4,10 +4,10 @@
 
 **Two-stage post-training for financial reasoning · LoRA SFT → GRPO**
 
-[![License](https://img.shields.io/badge/License-Apache--2.0-4c6ef5?style=flat-square)](LICENSE)
-[![Base](https://img.shields.io/badge/Base-Qwen3--8B-495057?style=flat-square)](https://huggingface.co/Qwen/Qwen3-8B)
-[![Framework](https://img.shields.io/badge/Framework-ms--swift%204.4.2-495057?style=flat-square)](https://github.com/modelscope/ms-swift)
-[![Hardware](https://img.shields.io/badge/Hardware-6%C3%97RTX4090-495057?style=flat-square)](#reproduction)
+[![License](https://img.shields.io/badge/License-Apache--2.0-4c6ef5?style=flat-square&logo=apache&logoColor=white)](LICENSE)
+[![Base](https://img.shields.io/badge/Base-Qwen3--8B-7048e8?style=flat-square&logo=huggingface&logoColor=white)](https://huggingface.co/Qwen/Qwen3-8B)
+[![Framework](https://img.shields.io/badge/Framework-ms--swift%204.4.2-1098ad?style=flat-square&logo=alibabacloud&logoColor=white)](https://github.com/modelscope/ms-swift)
+[![Hardware](https://img.shields.io/badge/Hardware-6%C3%97RTX4090-76b900?style=flat-square&logo=nvidia&logoColor=white)](#reproduction)
 
 Full experiment log · every evaluation artifact · a documented negative result for the RL stage
 
