@@ -19,7 +19,11 @@ Full experiment log · every evaluation artifact · a documented negative result
 
 ## Overview
 
-A general-purpose LLM applied to finance does not fail at arithmetic — it fails by giving a conclusion without the reasoning behind it. Finance is a compliance-heavy domain, and an answer whose chain of reasoning cannot be audited is unusable in production. The established remedy is two-stage post-training: first supervised fine-tuning on data carrying explicit reasoning chains, so the model learns to think before it answers; then reinforcement learning against a verifiable rule-based reward to push accuracy up. This project walks that path end to end on 6×RTX4090 and publishes the RL stage's negative result in full.
+Finance is a compliance-heavy domain: an answer that cannot show its reasoning is unusable in production. This project post-trains Qwen3-8B on **6×RTX4090** into a model that reasons before it answers — SFT lifts all four benchmarks, **+9.66 pp** on average; the GRPO stage that follows adds essentially nothing.
+
+The second half is the part worth reading. That RL produced no gain traces to a single flag: `--ref_adapters` pinned the reference model to the SFT checkpoint, KL stayed ≈ 0 for the entire run, and the policy never meaningfully left where it started — and a policy that does not move leaves no reward design any room to act. The negative result is published in full, alongside a symptom → root cause → fix log that includes three entries where a later re-check found the original note wrong and corrected it in place rather than deleting it.
+
+Every claim in this repository traces back to an evaluation artifact stored here.
 
 #### Key design decisions
 
@@ -28,12 +32,6 @@ A general-purpose LLM applied to finance does not fail at arithmetic — it fail
 - **Hard-case selection** — an item is kept only if the SFT model's own sampling pass rate satisfies `c/k ∈ (0,1)`; no LLM judges difficulty
 - **Memory bottleneck** — a liger-kernel fused cross-entropy removes the logits spike from the 152k-token vocabulary LM head, lifting `max_length` to 5120 and retaining 97.4% of the data; the final configuration is plain DDP
 - **Deployment** — after a quality gate, 3 vLLM replicas behind an Nginx gateway with Prometheus
-
-#### Findings
-
-SFT improves all four benchmarks, **+9.66 pp** on average, with general math and science ability holding up rather than degrading.
-
-GRPO's net effect is approximately zero (47.58 → 47.48). The root cause is `--ref_adapters` anchoring the reference model at the SFT checkpoint: KL stays ≈ 0 throughout (median 8.4e-4) and the policy barely leaves its starting point, while 41.6% of sampling groups return identical rewards, making the in-group advantage exactly zero and the batch gradient-free. That negative result is published here together with the full incident log — symptom, root cause, fix — and every evaluation artifact.
 
 ---
 
